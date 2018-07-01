@@ -1,3 +1,6 @@
 *.pyc
 __pycache__
 *.ini
+*.jpg
+/models5
+/models4
