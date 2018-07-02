@@ -21,6 +21,8 @@ from tkinter import messagebox
 import analyseSignal as anaSig
 filePath = ""
 pastfilePath = ""
+clean = False
+
 
 
 def open_image_gnome(picture, distance):
@@ -72,7 +74,7 @@ def showImgProc():
     new_w = 300
     pos = 25
     COLUMNS = 1
-    #win = Toplevel()
+
     for ii in range(0, len(lista_imagenes)):
         r, c = divmod(ii, COLUMNS)
         im = lista_imagenes[ii]
@@ -81,16 +83,23 @@ def showImgProc():
         myvar = Label(root, image=tkimage)
         myvar.image = tkimage
         myvar.grid(row=r, column=c, padx=565)
-    root.mainloop()
+
     # win.mainloop()
 
 
 def goQuery():
     global filePath
     global signalRecognized
+    global clean
+    global res
+
     print("Ejecutando modelo convolucional")
     signalRecognized = anaSig.runAnalyzer(filePath)
-    
+    showImgProc()
+    if (clean):
+        res.place(y=-80)
+    else:
+        clean = True
     res = Label(
         root,
         text="Señal: ►►" + signalRecognized,
@@ -98,7 +107,6 @@ def goQuery():
         background='white',
         fg='blue')
     res.place(x=390, y=595)
-    showImgProc()
 
 
 # ---------------------------------------------------------------
@@ -158,9 +166,10 @@ if __name__ == "__main__":
 
     la5 = Label(
         root, text="Imagen Binarizada ►", font=times2, background='white')
-    la5.place(x=390, y=390)
+    la5.place(x=390, y=420)
 
     #------------------
+    res = Label(root, text="Señal: ►►")
     bu = Button(
         root,
         text='Reconocer Señal',
