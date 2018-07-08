@@ -20,7 +20,9 @@ import sys
 NUM_TRAIN = 0
 NUM_CLASSES = 0
 IMAGE_SHAPE = (0, 0, 0)
-class_types = []
+CLASS_TYPES = []
+
+#np.set_printoptions(threshold=np.nan)
 
 
 # Print iterations progress
@@ -261,21 +263,21 @@ class AugmentedSignsBatchIterator(BatchIterator):
         for i in np.random.choice(
                 batch_size, int(batch_size * self.p), replace=False):
             # Top left corner, top margin
-            tl_top = random.uniform(-d, d)  
+            tl_top = random.uniform(-d, d)
             # Top left corner, left margin
-            tl_left = random.uniform(-d, d)  
+            tl_left = random.uniform(-d, d)
             # Bottom left corner, bottom margin
-            bl_bottom = random.uniform(-d,d)  
+            bl_bottom = random.uniform(-d, d)
             # Bottom left corner, left margin
-            bl_left = random.uniform(-d, d)  
+            bl_left = random.uniform(-d, d)
             # Top right corner, top margin
-            tr_top = random.uniform(-d, d)  
+            tr_top = random.uniform(-d, d)
             # Top right corner, right margin
-            tr_right = random.uniform(-d, d)  
+            tr_right = random.uniform(-d, d)
             # Bottom right corner, bottom margin
-            br_bottom = random.uniform(-d, d)  
+            br_bottom = random.uniform(-d, d)
             # Bottom right corner, right margin
-            br_right = random.uniform(-d, d)  
+            br_right = random.uniform(-d, d)
 
             transform = ProjectiveTransform()
             transform.estimate(
@@ -295,6 +297,7 @@ class AugmentedSignsBatchIterator(BatchIterator):
 
 
 def extend_balancing_classes(X, y, aug_intensity=0.5, counts=None):
+    global NUM_CLASSES
     """
     Extends dataset by duplicating existing images while applying data augmentation pipeline.
     Number of generated examples for each class may be provided in `counts`.
@@ -314,7 +317,7 @@ def extend_balancing_classes(X, y, aug_intensity=0.5, counts=None):
     -------
     A tuple of X and y.    
     """
-    num_classes = 43
+    num_classes = NUM_CLASSES
 
     _, class_counts = np.unique(y, return_counts=True)
     max_c = max(class_counts)
@@ -360,49 +363,134 @@ def extend_balancing_classes(X, y, aug_intensity=0.5, counts=None):
     return ((X_extended * 255.).astype(np.uint8), y_extended)
 
 
+def readOriginal(train_file):
+    global NUM_TRAIN
+    global IMAGE_SHAPE
+    global NUM_CLASSES
+    global CLASS_TYPES
+
+    X_train, y_train = readData(train_file)
+
+    CLASS_TYPES, init_per_class, class_counts = np.unique(
+        y_train, return_index=True, return_counts=True)
+    NUM_TRAIN = y_train.shape[0]
+    IMAGE_SHAPE = X_train[0].shape
+    NUM_CLASSES = class_counts.shape[0]
+    print("Number of INITIAL training examples =", NUM_TRAIN)
+    print("Image data shape =", IMAGE_SHAPE)
+    print("Number of classes =", NUM_CLASSES)
+    return X_train, y_train, class_counts
+
+
+def createFlip(X_train, y_train):
+    global NUM_TRAIN
+    global IMAGE_SHAPE
+    global NUM_CLASSES
+    global CLASS_TYPES
+
+    print("Start to flip images...")
+    X_train, y_train = flip_extend(X_train, y_train)
+    CLASS_TYPES, init_per_class, class_counts = np.unique(
+        y_train, return_index=True, return_counts=True)
+    NUM_TRAIN = X_train.shape[0]
+    IMAGE_SHAPE = X_train[0].shape
+    NUM_CLASSES = class_counts.shape[0]
+    print("Number of Flipped training examples =", NUM_TRAIN)
+    print("Image data shape =", IMAGE_SHAPE)
+    print("Number of classes =", NUM_CLASSES)
+    return X_train, y_train, class_counts
+
+
+def createExtendedDS(X_train, y_train, class_counts):
+    global NUM_TRAIN
+    global IMAGE_SHAPE
+    global NUM_CLASSES
+    global CLASS_TYPES
+
+    X_train, y_train = extend_balancing_classes(
+        X_train, y_train, aug_intensity=0.75, counts=class_counts * 8)
+    CLASS_TYPES, init_per_class, class_counts = np.unique(
+        y_train, return_index=True, return_counts=True)
+    NUM_TRAIN = X_train.shape[0]
+    IMAGE_SHAPE = X_train[0].shape
+    NUM_CLASSES = class_counts.shape[0]
+    print("Number of augmenting and extending training data =", NUM_TRAIN)
+    print("Image data shape =", IMAGE_SHAPE)
+    print("Number of classes =", NUM_CLASSES)
+    return X_train, y_train, class_counts
+
+
+def visualizarExtended(X_train, y_train, class_counts):
+
+    cant_conv = 6
+    ind = [1, 3, 5, 7, 2, 11, 13, 15, 17, 4]
+    cant_disp = 10  #de acuerdo al array 'ind'
+
+    X_train = (X_train / 255.).astype(np.float32)
+
+    fig = plt.figure(figsize=(cant_disp, cant_conv + 1))
+    fig.subplots_adjust(hspace=0.1, wspace=0.2)
+
+    more = False
+    for k in range(cant_conv):
+        batch_iterator = AugmentedSignsBatchIterator(
+            batch_size=cant_disp, p=1.0, intensity=0.75)
+        for x_batch, y_batch in batch_iterator(X_train[ind], y_train[ind]):
+            j = k + 1
+            for i in range(cant_disp):
+                if more == False:
+                    axis = fig.add_subplot(
+                        cant_disp,
+                        cant_conv + 1, (i + j),
+                        xticks=[],
+                        yticks=[])
+                    axis.imshow(X_train[ind[i]].reshape(28, 28), cmap='binary')
+                j += 1
+                axis = fig.add_subplot(
+                    cant_disp, cant_conv + 1, (i + j), xticks=[], yticks=[])
+                axis.imshow(x_batch[i].reshape(28, 28), cmap='binary')
+                j += cant_conv - 1  #2
+            break
+        more = True
+    plt.show()
+
+
 #----------------------------------------------------------------------------------------
-#----------------------------------------------------------------------------------------
+#---------------------------PLOT/SHOW IMAGES AND  HISTOGRAMS-----------------------------
 #----------------------------------------------------------------------------------------
 
 
-def plot_some_examples(titulo, init_per_class, class_types, class_counts,
-                       signnames):
-    #"""
+def plot_some_examples(X_data, y_data, signnames):
+    #[X_data] para mostrar data y [y_data] para analizar indices
+    #""" data NEEDS TO BE SORTED in order to work properly!!!!
+    CLASS_TYPES, init_per_class, class_counts = np.unique(
+        y_data, return_index=True, return_counts=True)
     col_width = max(len(name) for name in signnames)
+    n_examples = 8
 
-    for c, c_index, c_count in zip(class_types, init_per_class, class_counts):
+    for c, c_index_init, c_count in zip(CLASS_TYPES, init_per_class,
+                                        class_counts):
+        print(c, " ", c_index_init, " to ", c_index_init + c_count)
         print("Class %i: %-*s  %s samples" % (c, col_width, signnames[c],
                                               str(c_count)))
-        fig = plt.figure(figsize=(6, 1))
+        fig = plt.figure(figsize=(8, 1))
         fig.subplots_adjust(
             left=0, right=1, bottom=0, top=1, hspace=0.05, wspace=0.05)
-        random_indices = random.sample(range(c_index, c_index + c_count), 10)
+        random_indices = random.sample(
+            range(c_index_init, c_index_init + c_count), n_examples)
         print(random_indices)
-        for i in range(10):
-            axis = fig.add_subplot(1, 10, i + 1, xticks=[], yticks=[])
-            axis.imshow(X_train[random_indices[i]])
+        for i in range(n_examples):
+            axis = fig.add_subplot(1, n_examples, i + 1, xticks=[], yticks=[])
+            axis.imshow(
+                X_data[random_indices[i]].reshape(IMAGE_SHAPE), cmap='gray')
+        print(
+            "--------------------------------------------------------------------------------------\n"
+        )
         plt.show()
-        print("------------------------------------------------------------------------------\n")
-
-    #"""
-    #"""
-    # Plot the histogram
-    plt.xlabel('Clase')
-    plt.ylabel('Numero de imagenes')
-    plt.rcParams["figure.figsize"] = [30, 5]
-    axes = plt.gca()
-    axes.set_xlim([-1, 43])
-
-    plt.bar(
-        class_types,
-        class_counts,
-        tick_label=class_types,
-        width=0.8,
-        align='center')
-    plt.title(titulo)
+        if c == 50:
+            break
 
 
-    #"""
 def plot_histogram(titulo, class_indices, class_counts):
     # Plot the histogram
     plt.xlabel('Clase')
@@ -421,7 +509,7 @@ def plot_histogram(titulo, class_indices, class_counts):
     plt.show()
 
 
-def plot_histograms(titulo, class_types, class_counts1, class_counts2):
+def plot_histograms(titulo, CLASS_TYPES, class_counts1, class_counts2):
     #Plot the histogram
     #plt.xlabel('Clase')
     #plt.ylabel('Numero de imagenes')
@@ -430,78 +518,26 @@ def plot_histograms(titulo, class_types, class_counts1, class_counts2):
     #axes.set_xlim([-1,43])
 
     #Calculate optimal width
-    width = np.min(np.diff(class_types)) / 3
+    width = np.min(np.diff(CLASS_TYPES)) / 3
     width = 0.35
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.bar(class_types, class_counts1, width, color='b', label='-Ymin')
-    ax.bar(class_types + width, class_counts2, width, color='r', label='Ymax')
+    ax.bar(CLASS_TYPES, class_counts1, width, color='b', label='-Ymin')
+    ax.bar(CLASS_TYPES + width, class_counts2, width, color='r', label='Ymax')
     ax.set_xlabel('Test histogram')
-    ax.set_xticks(class_types + width / 2)
-    ax.set_xticklabels(class_types)
+    ax.set_xticks(CLASS_TYPES + width / 2)
+    ax.set_xticklabels(CLASS_TYPES)
     plt.show()
-    #plt.bar(class_types, class_counts, tick_label=class_types, width=0.8, align='center',  color=color)
+    #plt.bar(CLASS_TYPES, class_counts, tick_label=CLASS_TYPES, width=0.8, align='center',  color=color)
     #plt.title(titulo)
-
-
-def readOriginal(train_file):
-    global NUM_TRAIN
-    global IMAGE_SHAPE
-    global NUM_CLASSES
-    global class_types
-    X_train, y_train = readData(train_file)
-
-    class_types, init_per_class, class_counts = np.unique(
-        y_train, return_index=True, return_counts=True)
-    NUM_TRAIN = y_train.shape[0]
-    IMAGE_SHAPE = X_train[0].shape
-    NUM_CLASSES = class_counts.shape[0]
-    print("Number of INITIAL training examples =", NUM_TRAIN)
-    print("Image data shape =", IMAGE_SHAPE)
-    print("Number of classes =", NUM_CLASSES)
-    return X_train, y_train, class_counts
-
-
-def createFlip(X_train, y_train):
-    global NUM_TRAIN
-    global IMAGE_SHAPE
-    global NUM_CLASSES
-
-    print("Start to flip images...")
-    X_train, y_train = flip_extend(X_train, y_train)
-    class_types, init_per_class, class_counts = np.unique(
-        y_train, return_index=True, return_counts=True)
-    NUM_TRAIN = X_train.shape[0]
-    IMAGE_SHAPE = X_train[0].shape
-    NUM_CLASSES = class_counts.shape[0]
-    print("Number of Flipped training examples =", NUM_TRAIN)
-    print("Image data shape =", IMAGE_SHAPE)
-    print("Number of classes =", NUM_CLASSES)
-    return X_train, y_train, class_counts
-
-
-def createExtendedDS(X_train, y_train, class_counts):
-    global NUM_TRAIN
-    global IMAGE_SHAPE
-    global NUM_CLASSES
-
-    X_train, y_train = extend_balancing_classes(
-        X_train, y_train, aug_intensity=0.75, counts=class_counts * 8)
-    class_types, init_per_class, class_counts = np.unique(
-        y_train, return_index=True, return_counts=True)
-    NUM_TRAIN = X_train.shape[0]
-    IMAGE_SHAPE = X_train[0].shape
-    NUM_CLASSES = class_counts.shape[0]
-    print("Number of augmenting and extending training data =", NUM_TRAIN)
-    print("Image data shape =", IMAGE_SHAPE)
-    print("Number of classes =", NUM_CLASSES)
-    return X_train, y_train, class_counts
 
 
 if __name__ == "__main__":
     train_file = '../signals_database/traffic-signs-data/trainData.p'
     test_file = '../signals_database/traffic-signs-data/testData.p'
+    signnames = read_csv(
+        "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
 
     flipped_file = '../signals_database/traffic-signs-data/trainFlipped3.p'
     extended_file = 'traffic-signs-data/trainExtended8.p'
@@ -509,48 +545,32 @@ if __name__ == "__main__":
     train_processed = '../signals_database/traffic-signs-data/trainProcessed.p'
     test_processed = '../signals_database/traffic-signs-data/testProcessed.p'
 
-    #X_train, y_train, class_counts1 = readOriginal(train_file)
-    #plot_histogram('Class Distribution on Initial Data', class_types, class_counts1)
-    #"""
-    X_train, y_train, _ = readOriginal(train_file)
-    X_train, y_train = mezclar(X_train, y_train)
-    X_train = X_train / 255.
-    #np.set_printoptions(threshold=np.nan)
-    #print X_train[0]
-
-    batch_size = 5
-    batch_iterator = AugmentedSignsBatchIterator(
-        batch_size=batch_size, p=1.0, intensity=0.75)
-
-    for x_batch, y_batch in batch_iterator(X_train, y_train):
-        for i in range(batch_size):
-            # plot two images:
-            fig = plt.figure(figsize=(3, 1))
-            axis = fig.add_subplot(1, 5, 1, xticks=[], yticks=[])
-            axis.imshow(X_train[i])
-            axis = fig.add_subplot(1, 5, 2, xticks=[], yticks=[])
-            axis.imshow(x_batch[i])
-        break
-    plt.show()
-    #"""
-
+    #---------------------------PLOTTING HISTOGRAMS--------------------------------------------------
+    X_train, y_train, class_counts1 = readOriginal(
+        train_file)  #originally sorted
+    #X_train, y_train = mezclar(X_train, y_train)
+    #plot_histogram('Class Distribution on Initial Data', CLASS_TYPES, class_counts1)
+    plot_some_examples(X_train, y_train, signnames)
+    #-----------------------------------------------------------------------------
+    # Prepare a dataset with flipped classes
+    """
+    X_train, y_train, class_counts1 = readOriginal(train_file)
     #X_train, y_train, class_counts2 = createFlip(X_train, y_train)
 
-    #plot_histograms('Class Distribution across New Training Data', class_types,class_counts1,class_counts2)
+    #plot_histograms('Class Distribution across New Training Data', CLASS_TYPES,class_counts1,class_counts2)
     #new_data = {'features': X_train, 'labels': y_train}
     #save_data(new_data, flipped_file)
-
+    """
     #-----------------------------------------------------------------------------
     # Prepare a dataset with extended classes
     """
-    X_train ,y_train,class_counts = readOriginal(train_file)
-    class_count_original = class_counts
+    _ , _ , class_count_original = readOriginal(train_file)
 
     X_train ,y_train,class_counts1 = readOriginal(flipped_file)
     X_train_extended, y_train_extended,class_counts2 = createExtendedDS(X_train,y_train, class_count_original)
 
 
-    #plot_histograms('Class Distribution across New Training Data', class_types, class_counts1, class_counts2)
+    #plot_histograms('Class Distribution across New Training Data', CLASS_TYPES, class_counts1, class_counts2)
     new_data = {'features': X_train_extended, 'labels': y_train_extended}
     save_data(new_data, extended_file)
     """
@@ -566,7 +586,7 @@ if __name__ == "__main__":
     #X_test,y_test = mezclar(X_test,y_test)
     #imagenes_eval, clases_eval, clases_eval_flat = preprocess_dataset(X_test,y_test)
     """
-    #plot_histograms('Class Distribution across New Training Data', class_types, class_counts1, class_counts2)
+    #plot_histograms('Class Distribution across New Training Data', CLASS_TYPES, class_counts1, class_counts2)
     new_data = {'features': imagenes_entrenam, 'labels': clases_entrenam_flat}
     save_data(new_data, train_processed)
 
