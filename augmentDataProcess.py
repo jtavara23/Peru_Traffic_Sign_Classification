@@ -50,6 +50,25 @@ def print_progress(iteration, total):
     sys.stdout.flush()
 
 
+def readOriginal(train_file):
+    global NUM_TRAIN
+    global IMAGE_SHAPE
+    global NUM_CLASSES
+    global CLASS_TYPES
+
+    X_train, y_train = readData(train_file)
+
+    CLASS_TYPES, init_per_class, class_counts = np.unique(
+        y_train, return_index=True, return_counts=True)
+    NUM_TRAIN = y_train.shape[0]
+    IMAGE_SHAPE = X_train[0].shape
+    NUM_CLASSES = class_counts.shape[0]
+    print("Number of INITIAL training examples =", NUM_TRAIN)
+    print("Image data shape =", IMAGE_SHAPE)
+    print("Number of classes =", NUM_CLASSES)
+    return X_train, y_train, class_counts
+
+
 def save_data(file, path):
     with open(path, 'wb') as f:
         pickle.dump(file, f, protocol=2)
@@ -363,25 +382,6 @@ def extend_balancing_classes(X, y, aug_intensity=0.5, counts=None):
     return ((X_extended * 255.).astype(np.uint8), y_extended)
 
 
-def readOriginal(train_file):
-    global NUM_TRAIN
-    global IMAGE_SHAPE
-    global NUM_CLASSES
-    global CLASS_TYPES
-
-    X_train, y_train = readData(train_file)
-
-    CLASS_TYPES, init_per_class, class_counts = np.unique(
-        y_train, return_index=True, return_counts=True)
-    NUM_TRAIN = y_train.shape[0]
-    IMAGE_SHAPE = X_train[0].shape
-    NUM_CLASSES = class_counts.shape[0]
-    print("Number of INITIAL training examples =", NUM_TRAIN)
-    print("Image data shape =", IMAGE_SHAPE)
-    print("Number of classes =", NUM_CLASSES)
-    return X_train, y_train, class_counts
-
-
 def createFlip(X_train, y_train):
     global NUM_TRAIN
     global IMAGE_SHAPE
@@ -420,6 +420,11 @@ def createExtendedDS(X_train, y_train, class_counts):
     return X_train, y_train, class_counts
 
 
+#----------------------------------------------------------------------------------------
+#---------------------------PLOT/SHOW IMAGES AND  HISTOGRAMS-----------------------------
+#----------------------------------------------------------------------------------------
+
+
 def visualizarExtended(X_train, y_train, class_counts):
 
     cant_conv = 6
@@ -453,11 +458,6 @@ def visualizarExtended(X_train, y_train, class_counts):
             break
         more = True
     plt.show()
-
-
-#----------------------------------------------------------------------------------------
-#---------------------------PLOT/SHOW IMAGES AND  HISTOGRAMS-----------------------------
-#----------------------------------------------------------------------------------------
 
 
 def plot_some_examples(X_data, y_data, signnames):
@@ -550,7 +550,7 @@ if __name__ == "__main__":
         train_file)  #originally sorted
     #X_train, y_train = mezclar(X_train, y_train)
     #plot_histogram('Class Distribution on Initial Data', CLASS_TYPES, class_counts1)
-    plot_some_examples(X_train, y_train, signnames)
+    #plot_some_examples(X_train, y_train, signnames)
     #-----------------------------------------------------------------------------
     # Prepare a dataset with flipped classes
     """
