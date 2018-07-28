@@ -17,12 +17,28 @@ from skimage import exposure
 import warnings
 import sys
 
+#np.set_printoptions(threshold=np.nan)
+
 NUM_TRAIN = 0
 NUM_CLASSES = 0
 IMAGE_SHAPE = (0, 0, 0)
 CLASS_TYPES = []
 
-#np.set_printoptions(threshold=np.nan)
+#======================================================================================================
+train_file = '../signals_database/traffic-signs-data/trainData.p'
+test_file = '../signals_database/traffic-signs-data/testData.p'
+signnames = read_csv(
+    "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
+
+flipped_file = '../signals_database/traffic-signs-data/trainFlipped3.p'
+extended_file = '../signals_database/traffic-signs-data/trainExtended8.p'
+
+train_processed = '../signals_database/traffic-signs-data/trainProcessed.p'
+test_processed = '../signals_database/traffic-signs-data/testProcessed.p'
+extended_Test_file = '../signals_database/traffic-signs-data/testProcessedExtended.p'
+extended_test_processed = '../signals_database/traffic-signs-data/testExtendedProcessed.p'
+
+#======================================================================================================
 
 
 # Print iterations progress
@@ -401,14 +417,18 @@ def createFlip(X_train, y_train):
     return X_train, y_train, class_counts
 
 
-def createExtendedDS(X_train, y_train, class_counts):
+def createExtendedDS(X_train, y_train, class_counts, num_times,
+                     augm_intensity):
     global NUM_TRAIN
     global IMAGE_SHAPE
     global NUM_CLASSES
     global CLASS_TYPES
 
     X_train, y_train = extend_balancing_classes(
-        X_train, y_train, aug_intensity=0.75, counts=class_counts * 8)
+        X_train,
+        y_train,
+        aug_intensity=augm_intensity,
+        counts=class_counts * num_times)
     CLASS_TYPES, init_per_class, class_counts = np.unique(
         y_train, return_index=True, return_counts=True)
     NUM_TRAIN = X_train.shape[0]
@@ -510,7 +530,8 @@ def plot_histogram(titulo, class_indices, class_counts):
     plt.show()
 
 
-def plot_histograms(titulo, CLASS_TYPES, class_counts1, class_counts2):
+def plot_histograms(titulo, CLASS_TYPES, class_counts1, class_counts2, color1,
+                    color2):
     #Plot the histogram
     #plt.xlabel('Clase')
     #plt.ylabel('Numero de imagenes')
@@ -524,8 +545,9 @@ def plot_histograms(titulo, CLASS_TYPES, class_counts1, class_counts2):
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.bar(CLASS_TYPES, class_counts1, width, label='-Ymin')
-    ax.bar(CLASS_TYPES + width, class_counts2, width, color='r', label='Ymax')
+    ax.bar(CLASS_TYPES, class_counts1, width, color=color1, label='-Ymin')
+    ax.bar(
+        CLASS_TYPES + width, class_counts2, width, color=color2, label='Ymax')
     ax.set_xlabel('Image type')
     ax.set_xticks(CLASS_TYPES + width / 2)
     ax.set_xticklabels(CLASS_TYPES)
@@ -535,23 +557,13 @@ def plot_histograms(titulo, CLASS_TYPES, class_counts1, class_counts2):
 
 
 if __name__ == "__main__":
-    train_file = '../signals_database/traffic-signs-data/trainData.p'
-    test_file = '../signals_database/traffic-signs-data/testData.p'
-    signnames = read_csv(
-        "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
-
-    flipped_file = '../signals_database/traffic-signs-data/trainFlipped3.p'
-    extended_file = '../signals_database/traffic-signs-data/trainExtended8.p'
-
-    train_processed = '../signals_database/traffic-signs-data/trainProcessed.p'
-    test_processed = '../signals_database/traffic-signs-data/testProcessed.p'
 
     #---------------------------PLOTTING HISTOGRAMS--------------------------------------------------
-    X_train, y_train, class_counts1 = readOriginal(
-        test_file)  #originally sorted
+    #X_train, y_train, class_counts1 = readOriginal(
+    #    train_processed)  #originally sorted
     #X_train, y_train = mezclar(X_train, y_train)
-    plot_histogram('Class Distribution on Test Data', CLASS_TYPES,
-                   class_counts1)  #Get initial39209.png and initialTest12630.png
+    #plot_histogram('Class Distribution on Test Data', CLASS_TYPES,
+    #               class_counts1)  #Get initial39209.png and initialTest12630.png
     #plot_some_examples(X_train, y_train, signnames)
     """
     #-----------------------------------------------------------------------------
@@ -560,7 +572,7 @@ if __name__ == "__main__":
     #X_train, y_train, class_counts1 = readOriginal(train_file)
     #X_train, y_train, class_counts2 = createFlip(X_train, y_train)
 
-    #plot_histograms('Class Distribution across New Training Data', CLASS_TYPES,class_counts1,class_counts2)
+    #plot_histograms('Class Distribution across New Training Data', CLASS_TYPES,class_counts1,class_counts2,'b','r')
     #new_data = {'features': X_train, 'labels': y_train}
     #save_data(new_data, flipped_file)
     
@@ -570,11 +582,11 @@ if __name__ == "__main__":
     _, _, class_count_original = readOriginal(train_file)
     X_train, y_train, class_counts1 = readOriginal(flipped_file)
     plot_histograms('Class Distribution Original Training data vs New Flipped Training Data',
-                    CLASS_TYPES, class_count_original, class_counts1)# get flippedImg_59698.png
+                    CLASS_TYPES, class_count_original, class_counts1,'b','r')# get flippedImg_59698.png
 
-    #X_train_extended, y_train_extended,class_counts2 = createExtendedDS(X_train,y_train, class_count_original)
+    #X_train_extended, y_train_extended,class_counts2 = createExtendedDS(X_train,y_train, class_count_original, 8 ,0.75)
 
-    #plot_histograms('Class Distribution across New Extended Training Data', CLASS_TYPES, class_counts1, class_counts2)
+    #plot_histograms('Class Distribution across New Extended Training Data', CLASS_TYPES, class_counts1, class_counts2,'b','r')
     #new_data = {'features': X_train_extended, 'labels': y_train_extended}
     #save_data(new_data, extended_file)
     
@@ -585,7 +597,7 @@ if __name__ == "__main__":
     X_train, y_train, class_counts1 = readOriginal(extended_file)
     plot_histograms('Class Distribution  New Flipped Training Data vs New Extended Training Data',
                     CLASS_TYPES, class_count_original,
-                    class_counts1)  # get ExtendedImg_313672.png
+                    class_counts1, 'b','r')  # get ExtendedImg_313672.png
     #X_train ,y_train = mezclar(X_train,y_train)
     #imagenes_entrenam, clases_entrenam, clases_entrenam_flat = preprocess_dataset(X_train,y_train)
 
@@ -595,10 +607,23 @@ if __name__ == "__main__":
     
     plot_histograms(
         'Class Distribution between Test Data and New Training Data',
-        CLASS_TYPES, class_counts2, class_counts1)  #get finalVS.png
+        CLASS_TYPES, class_counts2, class_counts1,'b','r')  #get finalVS.png
     #new_data = {'features': imagenes_entrenam, 'labels': clases_entrenam_flat}
     #save_data(new_data, train_processed)
 
     #new_data = {'features': imagenes_eval, 'labels': clases_eval_flat}
     #save_data(new_data, test_processed)
     """
+    #-----------------------------------------------------------------------------
+    X_test, y_test, class_counts1 = readOriginal(test_processed)
+
+    #X_test_extended, y_test_extended, _ = createExtendedDS(
+    #    X_test, y_test, class_counts1, 3, 0.75)
+
+    X_test_extended, y_test_extended, class_counts2 = readOriginal(
+    extended_Test_file)
+
+    plot_histograms('Class Distribution across New Extended Test Data',
+                    CLASS_TYPES, class_counts1, class_counts2, 'g', 'm')
+    #new_data = {'features': X_test_extended, 'labels': y_test_extended}
+    #save_data(new_data, extended_Test_file)
