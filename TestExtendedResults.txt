@@ -1,0 +1,4 @@
+'D:/signalsWindows/models5/model-49296'
+Acierto en el conjunto de Testing: 93.00% (58727 / 63150)
+2018-07-27
+-------------------------------------------------------------
