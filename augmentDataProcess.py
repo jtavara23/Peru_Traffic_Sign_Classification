@@ -30,13 +30,14 @@ test_file = '../signals_database/traffic-signs-data/testData.p'
 signnames = read_csv(
     "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
 
-flipped_file = '../signals_database/traffic-signs-data/trainFlipped3.p'
-extended_file = '../signals_database/traffic-signs-data/trainExtended8.p'
-
+train_flipped_file = '../signals_database/traffic-signs-data/trainFlipped3.p'
+train_extended_file = '../signals_database/traffic-signs-data/trainExtended8.p'
 train_processed = '../signals_database/traffic-signs-data/trainProcessed.p'
 test_processed = '../signals_database/traffic-signs-data/testProcessed.p'
-extended_Test_file = '../signals_database/traffic-signs-data/testProcessedExtended.p'
-extended_test_processed = '../signals_database/traffic-signs-data/testExtendedProcessed.p'
+test_sorted = '../signals_database/traffic-signs-data/testSorted.p'
+test_sorted_extened = '../signals_database/traffic-signs-data/testSorted_Extended.p'
+test_extened = '../signals_database/traffic-signs-data/testExtended.p'
+test_processed_extended = '../signals_database/traffic-signs-data/testExtendedProcessed.p'
 
 #======================================================================================================
 
@@ -64,6 +65,25 @@ def print_progress(iteration, total):
     if iteration == total:
         sys.stdout.write('\n')
     sys.stdout.flush()
+
+
+def ordenar(X_data, y_data, class_counts):
+    X_extended = np.empty(
+        [0, X_data.shape[1], X_data.shape[2], X_data.shape[3]],
+        dtype=np.float32)
+    y_extended = np.empty([0], dtype=y_data.dtype)
+
+    for c, c_count in zip(range(NUM_CLASSES), class_counts):
+        # How many examples should there be eventually for this class:
+        print("In the class ", c, " with ", c_count, " images")
+        # First copy existing data for this class
+        X_source = (X_data[y_data == c])
+        y_source = y_data[y_data == c]
+        X_extended = np.append(X_extended, X_source, axis=0)
+        nuevo_cant = X_extended.shape[0] - y_extended.shape[0]
+        y_extended = np.append(y_extended, np.full((nuevo_cant), c, dtype=int))
+
+    return X_extended, y_extended
 
 
 def readOriginal(train_file):
@@ -486,7 +506,7 @@ def plot_some_examples(X_data, y_data, signnames):
     CLASS_TYPES, init_per_class, class_counts = np.unique(
         y_data, return_index=True, return_counts=True)
     col_width = max(len(name) for name in signnames)
-    n_examples = 8
+    n_examples = 3
 
     for c, c_index_init, c_count in zip(CLASS_TYPES, init_per_class,
                                         class_counts):
@@ -502,12 +522,12 @@ def plot_some_examples(X_data, y_data, signnames):
         for i in range(n_examples):
             axis = fig.add_subplot(1, n_examples, i + 1, xticks=[], yticks=[])
             axis.imshow(
-                X_data[random_indices[i]].reshape(IMAGE_SHAPE), cmap='gray')
+                X_data[random_indices[i]].reshape((IMAGE_SHAPE)), cmap='gray')
         print(
             "--------------------------------------------------------------------------------------\n"
         )
         plt.show()
-        if c == 50:
+        if c == 5:
             break
 
 
@@ -560,7 +580,7 @@ if __name__ == "__main__":
 
     #---------------------------PLOTTING HISTOGRAMS--------------------------------------------------
     #X_train, y_train, class_counts1 = readOriginal(
-    #    train_processed)  #originally sorted
+    #    train_file)  #originally sorted
     #X_train, y_train = mezclar(X_train, y_train)
     #plot_histogram('Class Distribution on Test Data', CLASS_TYPES,
     #               class_counts1)  #Get initial39209.png and initialTest12630.png
@@ -574,13 +594,13 @@ if __name__ == "__main__":
 
     #plot_histograms('Class Distribution across New Training Data', CLASS_TYPES,class_counts1,class_counts2,'b','r')
     #new_data = {'features': X_train, 'labels': y_train}
-    #save_data(new_data, flipped_file)
+    #save_data(new_data, train_flipped_file)
     
     #-----------------------------------------------------------------------------
     # Prepare a dataset with extended classes
     
     _, _, class_count_original = readOriginal(train_file)
-    X_train, y_train, class_counts1 = readOriginal(flipped_file)
+    X_train, y_train, class_counts1 = readOriginal(train_flipped_file)
     plot_histograms('Class Distribution Original Training data vs New Flipped Training Data',
                     CLASS_TYPES, class_count_original, class_counts1,'b','r')# get flippedImg_59698.png
 
@@ -588,17 +608,21 @@ if __name__ == "__main__":
 
     #plot_histograms('Class Distribution across New Extended Training Data', CLASS_TYPES, class_counts1, class_counts2,'b','r')
     #new_data = {'features': X_train_extended, 'labels': y_train_extended}
-    #save_data(new_data, extended_file)
+    #save_data(new_data, train_extended_file)
     
 
     #-----------------------------------------------------------------------------
     #read Data
-    _, _, class_count_original = readOriginal(flipped_file)
-    X_train, y_train, class_counts1 = readOriginal(extended_file)
+    _, _, class_count_original = readOriginal(train_flipped_file)
+    X_train, y_train, class_counts1 = readOriginal(train_extended_file)
     plot_histograms('Class Distribution  New Flipped Training Data vs New Extended Training Data',
                     CLASS_TYPES, class_count_original,
                     class_counts1, 'b','r')  # get ExtendedImg_313672.png
     #X_train ,y_train = mezclar(X_train,y_train)
+    
+    
+    
+    
     #imagenes_entrenam, clases_entrenam, clases_entrenam_flat = preprocess_dataset(X_train,y_train)
 
     X_test, y_test, class_counts2 = readOriginal(test_file)
@@ -615,15 +639,43 @@ if __name__ == "__main__":
     #save_data(new_data, test_processed)
     """
     #-----------------------------------------------------------------------------
-    X_test, y_test, class_counts1 = readOriginal(test_processed)
 
-    #X_test_extended, y_test_extended, _ = createExtendedDS(
-    #    X_test, y_test, class_counts1, 3, 0.75)
+    #X_test, y_test, class_counts1 = readOriginal(test_file)
+    #To generate Augment Data we need to sort the test files
+    #X_sorted, y_sorted = ordenar(X_test, y_test, class_counts1)
 
-    X_test_extended, y_test_extended, class_counts2 = readOriginal(
-    extended_Test_file)
+    #new_data = {'features': X_sorted, 'labels': y_sorted}
+    #save_data(new_data, test_sorted)
+    #-----------------------------------------------------------------------------
+    #X_sorted, y_sorted, class_counts1 = readOriginal(test_sorted)
+    #X_test_sorted_extended, y_test_sorted_extended, _ = createExtendedDS(
+    #    X_sorted, y_sorted, class_counts1, 5, 0.75)
 
-    plot_histograms('Class Distribution across New Extended Test Data',
-                    CLASS_TYPES, class_counts1, class_counts2, 'g', 'm')
+    #new_data = {
+    #    'features': X_test_sorted_extended,
+    #    'labels': y_test_sorted_extended
+    #}
+    #save_data(new_data, test_sorted_extened)
+    #-----------------------------------------------------------------------------
+    #shuffle the extended sorted test file
+    #X_test_sorted_extended, y_test_sorted_extended, class_counts1 = readOriginal(
+    #    test_sorted_extened)
+    #X_test_extended, y_test_extended = mezclar(X_test_sorted_extended,
+    #                                           y_test_sorted_extended)
     #new_data = {'features': X_test_extended, 'labels': y_test_extended}
-    #save_data(new_data, extended_Test_file)
+    #save_data(new_data, test_extened)
+    #-----------------------------------------------------------------------------
+    X_test_extended, y_test_extended, class_counts1 = readOriginal(
+        test_extened)
+    imagenes_eval, clases_eval, clases_eval_flat = preprocess_dataset(
+        X_test_extended, y_test_extended)
+    new_data = {'features': imagenes_eval, 'labels': clases_eval_flat}
+    save_data(new_data, test_processed_extended)
+
+    #plot_some_examples(X_test_extended, y_test_extended, signnames)
+    #X_test, y_test, class_counts1 = readOriginal(test_extened)
+    #X_test_extended, y_test_extended, class_counts2 = readOriginal(
+    #    test_processed_extended)
+
+    #plot_histograms('Class Distribution across New Extended Test Data',
+    #                CLASS_TYPES, class_counts1, class_counts2, 'g', 'm')
