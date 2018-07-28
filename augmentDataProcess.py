@@ -25,7 +25,7 @@ IMAGE_SHAPE = (0, 0, 0)
 CLASS_TYPES = []
 
 #======================================================================================================
-train_file = '../signals_database/traffic-signs-data/trainData.p'
+train_file = '../signals_database/traffic-signs-data/trainData.p'#originally sorted
 test_file = '../signals_database/traffic-signs-data/testData.p'
 signnames = read_csv(
     "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
@@ -468,8 +468,9 @@ def createExtendedDS(X_train, y_train, class_counts, num_times,
 def visualizarExtended(X_train, y_train, class_counts):
 
     cant_conv = 6
-    ind = [1, 3, 5, 7, 2, 11, 13, 15, 17, 4]
-    cant_disp = 10  #de acuerdo al array 'ind'
+    #ind = [1, 3, 5, 7, 2, 11, 13, 15, 17, 4]
+    ind = [1, 3, 5, 7]
+    cant_disp = 4  #de acuerdo al array 'ind'
 
     X_train = (X_train / 255.).astype(np.float32)
 
@@ -576,103 +577,111 @@ def plot_histograms(titulo, CLASS_TYPES, class_counts1, class_counts2, color1,
     #plt.bar(CLASS_TYPES, class_counts, tick_label=CLASS_TYPES, width=0.8, align='center',  color=color)
 
 
-if __name__ == "__main__":
+def showHistogram(file, title):
+    X_train, y_train, class_counts1 = readOriginal(
+        file)  
+    
+    plot_histogram(title, CLASS_TYPES,
+                   class_counts1)  #Get initial39209.png and initialTest12630.png
 
+def doFlip():
+    X_train, y_train, class_counts1 = readOriginal(train_file)
+    X_train, y_train, class_counts2 = createFlip(X_train, y_train)
+
+    #plot_histograms('Class Distribution Original Training data vs New Flipped Training Data', CLASS_TYPES,class_counts1,class_counts2,'b','r')# get flippedImg_59698.png
+    new_data = {'features': X_train, 'labels': y_train}
+    save_data(new_data, train_flipped_file)
+
+def doExtended():
+    X_train, y_train, class_counts1 = readOriginal(train_flipped_file)
+    
+    X_train_extended, y_train_extended,class_counts2 = createExtendedDS(X_train,y_train, class_counts1, 8 ,0.75)
+
+    #plot_histograms('Class Distribution  New Flipped Training Data vs New Extended Training Data', CLASS_TYPES, class_counts1, class_counts2,'b','r')# get ExtendedImg_313672.png
+    new_data = {'features': X_train_extended, 'labels': y_train_extended}
+    save_data(new_data, train_extended_file)
+
+def  sortTestFile():
+    X_test, y_test, class_counts1 = readOriginal(test_file)
+    #To generate Augment Data we need to sort the test files
+    X_sorted, y_sorted = ordenar(X_test, y_test, class_counts1)
+
+    new_data = {'features': X_sorted, 'labels': y_sorted}
+    save_data(new_data, test_sorted)
+    
+
+def extendSortedTest():
+    X_sorted, y_sorted, class_counts1 = readOriginal(test_sorted)
+    X_test_sorted_extended, y_test_sorted_extended, _ = createExtendedDS(
+        X_sorted, y_sorted, class_counts1, 5, 0.75)
+
+    new_data = {
+        'features': X_test_sorted_extended,
+        'labels': y_test_sorted_extended
+    }
+    save_data(new_data, test_sorted_extened)
+
+
+def shuffleExtendedSortedTestFile():
+    X_test_sorted_extended, y_test_sorted_extended, class_counts1 = readOriginal(
+        test_sorted_extened)
+    #plot_some_examples(X_test_sorted_extended, y_test_sorted_extended,
+    #                   signnames)
+    X_test_extended, y_test_extended = mezclar(X_test_sorted_extended,
+                                               y_test_sorted_extended)
+    new_data = {'features': X_test_extended, 'labels': y_test_extended}
+    save_data(new_data, test_extened)
+
+
+
+if __name__ == "__main__":
+    print("hello")
     #---------------------------PLOTTING HISTOGRAMS--------------------------------------------------
-    #X_train, y_train, class_counts1 = readOriginal(
-    #    train_file)  #originally sorted
-    #X_train, y_train = mezclar(X_train, y_train)
-    #plot_histogram('Class Distribution on Test Data', CLASS_TYPES,
-    #               class_counts1)  #Get initial39209.png and initialTest12630.png
+    #showHistogram(train_file,'Class Distribution on Test Data')
     #plot_some_examples(X_train, y_train, signnames)
-    """
+    
     #-----------------------------------------------------------------------------
     # Prepare a dataset with flipped classes
-    
-    #X_train, y_train, class_counts1 = readOriginal(train_file)
-    #X_train, y_train, class_counts2 = createFlip(X_train, y_train)
-
-    #plot_histograms('Class Distribution across New Training Data', CLASS_TYPES,class_counts1,class_counts2,'b','r')
-    #new_data = {'features': X_train, 'labels': y_train}
-    #save_data(new_data, train_flipped_file)
+    #doFlip()
     
     #-----------------------------------------------------------------------------
     # Prepare a dataset with extended classes
+    #doExtended()
     
-    _, _, class_count_original = readOriginal(train_file)
-    X_train, y_train, class_counts1 = readOriginal(train_flipped_file)
-    plot_histograms('Class Distribution Original Training data vs New Flipped Training Data',
-                    CLASS_TYPES, class_count_original, class_counts1,'b','r')# get flippedImg_59698.png
-
-    #X_train_extended, y_train_extended,class_counts2 = createExtendedDS(X_train,y_train, class_count_original, 8 ,0.75)
-
-    #plot_histograms('Class Distribution across New Extended Training Data', CLASS_TYPES, class_counts1, class_counts2,'b','r')
-    #new_data = {'features': X_train_extended, 'labels': y_train_extended}
-    #save_data(new_data, train_extended_file)
-    
-
     #-----------------------------------------------------------------------------
-    #read Data
-    _, _, class_count_original = readOriginal(train_flipped_file)
-    X_train, y_train, class_counts1 = readOriginal(train_extended_file)
-    plot_histograms('Class Distribution  New Flipped Training Data vs New Extended Training Data',
-                    CLASS_TYPES, class_count_original,
-                    class_counts1, 'b','r')  # get ExtendedImg_313672.png
-    #X_train ,y_train = mezclar(X_train,y_train)
-    
-    
-    
     
     #imagenes_entrenam, clases_entrenam, clases_entrenam_flat = preprocess_dataset(X_train,y_train)
 
-    X_test, y_test, class_counts2 = readOriginal(test_file)
+    #X_test, y_test, class_counts2 = readOriginal(test_file)
     #X_test,y_test = mezclar(X_test,y_test)
     #imagenes_eval, clases_eval, clases_eval_flat = preprocess_dataset(X_test,y_test)
     
-    plot_histograms(
-        'Class Distribution between Test Data and New Training Data',
-        CLASS_TYPES, class_counts2, class_counts1,'b','r')  #get finalVS.png
+    #plot_histograms(
+    #    'Class Distribution between Test Data and New Training Data',
+    #    CLASS_TYPES, class_counts2, class_counts1,'b','r')  #get finalVS.png
+    
     #new_data = {'features': imagenes_entrenam, 'labels': clases_entrenam_flat}
     #save_data(new_data, train_processed)
-
     #new_data = {'features': imagenes_eval, 'labels': clases_eval_flat}
     #save_data(new_data, test_processed)
-    """
+    
     #-----------------------------------------------------------------------------
-
-    #X_test, y_test, class_counts1 = readOriginal(test_file)
-    #To generate Augment Data we need to sort the test files
-    #X_sorted, y_sorted = ordenar(X_test, y_test, class_counts1)
-
-    #new_data = {'features': X_sorted, 'labels': y_sorted}
-    #save_data(new_data, test_sorted)
+    #sortTestFile()
+    
     #-----------------------------------------------------------------------------
-    #X_sorted, y_sorted, class_counts1 = readOriginal(test_sorted)
-    #X_test_sorted_extended, y_test_sorted_extended, _ = createExtendedDS(
-    #    X_sorted, y_sorted, class_counts1, 5, 0.75)
-
-    #new_data = {
-    #    'features': X_test_sorted_extended,
-    #    'labels': y_test_sorted_extended
-    #}
-    #save_data(new_data, test_sorted_extened)
+    #extendSortedTest()
     #-----------------------------------------------------------------------------
-    #shuffle the extended sorted test file
-    #X_test_sorted_extended, y_test_sorted_extended, class_counts1 = readOriginal(
-    #    test_sorted_extened)
-    #X_test_extended, y_test_extended = mezclar(X_test_sorted_extended,
-    #                                           y_test_sorted_extended)
-    #new_data = {'features': X_test_extended, 'labels': y_test_extended}
-    #save_data(new_data, test_extened)
+    
+    #shuffleExtendedSortedTestFile()
+    
     #-----------------------------------------------------------------------------
-    X_test_extended, y_test_extended, class_counts1 = readOriginal(
-        test_extened)
-    imagenes_eval, clases_eval, clases_eval_flat = preprocess_dataset(
-        X_test_extended, y_test_extended)
-    new_data = {'features': imagenes_eval, 'labels': clases_eval_flat}
-    save_data(new_data, test_processed_extended)
+    #X_test_extended, y_test_extended, class_counts1 = readOriginal(
+    #    test_extened)
+    #imagenes_eval, clases_eval, clases_eval_flat = preprocess_dataset(
+    #    X_test_extended, y_test_extended)
+    #new_data = {'features': imagenes_eval, 'labels': clases_eval_flat}
+    #save_data(new_data, test_processed_extended)
 
-    #plot_some_examples(X_test_extended, y_test_extended, signnames)
     #X_test, y_test, class_counts1 = readOriginal(test_extened)
     #X_test_extended, y_test_extended, class_counts2 = readOriginal(
     #    test_processed_extended)
