@@ -334,9 +334,8 @@ def create_cnn():
 
 if __name__ == "__main__":
 
-    #train_file = 'traffic-signs-data/trainProcessed.p'
-    train_file = '../signals_database/traffic-signs-data/trainProcessedShuffled.p'
-    test_file = '../signals_database/traffic-signs-data/testProcessedShuffled.p'
+    train_file = 'traffic-signs-data/trainProcessed.p'
+    test_file = '../signals_database/traffic-signs-data/testProcessed.p'
     signnames = read_csv(
         "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
 
