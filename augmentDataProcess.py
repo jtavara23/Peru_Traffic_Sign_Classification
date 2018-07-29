@@ -2,7 +2,7 @@ import numpy as np
 import pickle
 from pandas.io.parsers import read_csv
 import matplotlib.pyplot as plt
-from funcionesAuxiliares import readData
+from funcionesAuxiliares import readData, display
 
 # pip install nolearn , conda install libpython , pip install --upgrade https://github.com/Lasagne/Lasagne/archive/master.zip
 from nolearn.lasagne import BatchIterator
@@ -25,7 +25,7 @@ IMAGE_SHAPE = (0, 0, 0)
 CLASS_TYPES = []
 
 #======================================================================================================
-train_file = '../signals_database/traffic-signs-data/trainData.p'#originally sorted
+train_file = '../signals_database/traffic-signs-data/trainData.p'  #originally sorted
 test_file = '../signals_database/traffic-signs-data/testData.p'
 signnames = read_csv(
     "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
@@ -116,7 +116,7 @@ def mezclar(X, y):
     return X, y
 
 
-def preprocess_dataset(X, y):
+def process_dataset(X, y):
     """
     Performs feature scaling, one-hot encoding of labels and shuffles the data if labels are provided.
     Assumes original dataset is sorted by labels.
@@ -465,49 +465,78 @@ def createExtendedDS(X_train, y_train, class_counts, num_times,
 #----------------------------------------------------------------------------------------
 
 
-def visualizarExtended(X_train, y_train, class_counts):
+def showFlippledImages():
+    self_flippable_horizontally = np.array(
+        [11, 12, 13, 15, 17, 18, 22, 26, 30, 35])
+    # Classes of signs that, when flipped vertically, should still be classified as the same class
+    #self_flippable_vertically = np.array([1, 5, 12, 15, 17])
+    self_flippable_vertically = np.array([1, 5])
+    # Classes of signs that, when flipped horizontally and then vertically, should still be classified as the same class
+    self_flippable_both = np.array([32, 40])
+    # Classes of signs that, when flipped horizontally, would still be meaningful, but should be classified as some other class
+    cross_flippable = np.array([
+        [19, 20],
+        [33, 34],
+        [36, 37],
+        [38, 39],
+        [20, 19],
+        [34, 33],
+        [37, 36],
+        [39, 38],
+    ])
+    num_classes = 43
+    X_result = np.empty([0, X.shape[1], X.shape[2], X.shape[3]], dtype=X.dtype)
+    Y_result = np.empty([0], dtype=y.dtype)
 
-    cant_conv = 6
-    #ind = [1, 3, 5, 7, 2, 11, 13, 15, 17, 4]
-    ind = [1, 3, 5, 7]
-    cant_disp = 4  #de acuerdo al array 'ind'
+    #for c in range
 
-    X_train = (X_train / 255.).astype(np.float32)
 
-    fig = plt.figure(figsize=(cant_disp, cant_conv + 1))
+def showAugmentSamples():
+    x_train, y_train, _ = readOriginal(train_file)
+    X_input, y_output = mezclar(x_train, y_train)
+    cant_conv = 8
+    cant_orig_imgs = 5
+    ind = range(0, cant_orig_imgs)
+
+    X_input = (X_input / 255.).astype(np.float32)
+
+    fig = plt.figure(figsize=(cant_orig_imgs, cant_conv + 1))
     fig.subplots_adjust(hspace=0.1, wspace=0.2)
 
     more = False
     for k in range(cant_conv):
         batch_iterator = AugmentedSignsBatchIterator(
-            batch_size=cant_disp, p=1.0, intensity=0.75)
-        for x_batch, y_batch in batch_iterator(X_train[ind], y_train[ind]):
+            batch_size=cant_orig_imgs, p=1.0, intensity=0.75)
+        for x_batch, y_batch in batch_iterator(X_input[ind], y_output[ind]):
             j = k + 1
-            for i in range(cant_disp):
+            for i in range(cant_orig_imgs):
                 if more == False:
                     axis = fig.add_subplot(
-                        cant_disp,
+                        cant_orig_imgs,
                         cant_conv + 1, (i + j),
                         xticks=[],
                         yticks=[])
-                    axis.imshow(X_train[ind[i]].reshape(28, 28), cmap='binary')
+                    axis.imshow(X_input[ind[i]].reshape((IMAGE_SHAPE)))
                 j += 1
                 axis = fig.add_subplot(
-                    cant_disp, cant_conv + 1, (i + j), xticks=[], yticks=[])
-                axis.imshow(x_batch[i].reshape(28, 28), cmap='binary')
+                    cant_orig_imgs,
+                    cant_conv + 1, (i + j),
+                    xticks=[],
+                    yticks=[])
+                axis.imshow(x_batch[i].reshape((IMAGE_SHAPE)))
                 j += cant_conv - 1  #2
             break
         more = True
     plt.show()
 
 
-def plot_some_examples(X_data, y_data, signnames):
+def plot_some_examples(X_data, y_data, n_examples):
     #[X_data] para mostrar data y [y_data] para analizar indices
     #""" data NEEDS TO BE SORTED in order to work properly!!!!
+    global IMAGE_SHAPE
     CLASS_TYPES, init_per_class, class_counts = np.unique(
         y_data, return_index=True, return_counts=True)
     col_width = max(len(name) for name in signnames)
-    n_examples = 3
 
     for c, c_index_init, c_count in zip(CLASS_TYPES, init_per_class,
                                         class_counts):
@@ -522,6 +551,8 @@ def plot_some_examples(X_data, y_data, signnames):
         print(random_indices)
         for i in range(n_examples):
             axis = fig.add_subplot(1, n_examples, i + 1, xticks=[], yticks=[])
+            if (IMAGE_SHAPE == (32, 32, 1)):
+                IMAGE_SHAPE = (32, 32)
             axis.imshow(
                 X_data[random_indices[i]].reshape((IMAGE_SHAPE)), cmap='gray')
         print(
@@ -578,11 +609,12 @@ def plot_histograms(titulo, CLASS_TYPES, class_counts1, class_counts2, color1,
 
 
 def showHistogram(file, title):
-    X_train, y_train, class_counts1 = readOriginal(
-        file)  
-    
-    plot_histogram(title, CLASS_TYPES,
-                   class_counts1)  #Get initial39209.png and initialTest12630.png
+    X_train, y_train, class_counts1 = readOriginal(file)
+
+    plot_histogram(
+        title, CLASS_TYPES,
+        class_counts1)  #Get initial39209.png and initialTest12630.png
+
 
 def doFlip():
     X_train, y_train, class_counts1 = readOriginal(train_file)
@@ -592,23 +624,26 @@ def doFlip():
     new_data = {'features': X_train, 'labels': y_train}
     save_data(new_data, train_flipped_file)
 
+
 def doExtended():
     X_train, y_train, class_counts1 = readOriginal(train_flipped_file)
-    
-    X_train_extended, y_train_extended,class_counts2 = createExtendedDS(X_train,y_train, class_counts1, 8 ,0.75)
+
+    X_train_extended, y_train_extended, class_counts2 = createExtendedDS(
+        X_train, y_train, class_counts1, 8, 0.75)
 
     #plot_histograms('Class Distribution  New Flipped Training Data vs New Extended Training Data', CLASS_TYPES, class_counts1, class_counts2,'b','r')# get ExtendedImg_313672.png
     new_data = {'features': X_train_extended, 'labels': y_train_extended}
     save_data(new_data, train_extended_file)
 
-def  sortTestFile():
+
+def sortTestFile():
     X_test, y_test, class_counts1 = readOriginal(test_file)
     #To generate Augment Data we need to sort the test files
     X_sorted, y_sorted = ordenar(X_test, y_test, class_counts1)
 
     new_data = {'features': X_sorted, 'labels': y_sorted}
     save_data(new_data, test_sorted)
-    
+
 
 def extendSortedTest():
     X_sorted, y_sorted, class_counts1 = readOriginal(test_sorted)
@@ -625,66 +660,78 @@ def extendSortedTest():
 def shuffleExtendedSortedTestFile():
     X_test_sorted_extended, y_test_sorted_extended, class_counts1 = readOriginal(
         test_sorted_extened)
-    #plot_some_examples(X_test_sorted_extended, y_test_sorted_extended,
-    #                   signnames)
+    #plot_some_examples(X_test_sorted_extended, y_test_sorted_extended,3)
     X_test_extended, y_test_extended = mezclar(X_test_sorted_extended,
                                                y_test_sorted_extended)
     new_data = {'features': X_test_extended, 'labels': y_test_extended}
     save_data(new_data, test_extened)
 
 
+def showPreprocessResult():
+    X, y, _ = readOriginal(train_processed)
+    plot_some_examples(X, y, 3)
+    #img = X[10].reshape(32, 32)
+    #plt.axis('off')
+    #plt.imshow(img, cmap='binary')
+    #plt.show()
+
 
 if __name__ == "__main__":
-    print("hello")
+    print("Finish importing packages")
     #---------------------------PLOTTING HISTOGRAMS--------------------------------------------------
     #showHistogram(train_file,'Class Distribution on Test Data')
-    #plot_some_examples(X_train, y_train, signnames)
-    
+    #plot_some_examples(X_train, y_train,3)
+
     #-----------------------------------------------------------------------------
     # Prepare a dataset with flipped classes
     #doFlip()
-    
+
     #-----------------------------------------------------------------------------
     # Prepare a dataset with extended classes
     #doExtended()
-    
+
     #-----------------------------------------------------------------------------
-    
-    #imagenes_entrenam, clases_entrenam, clases_entrenam_flat = preprocess_dataset(X_train,y_train)
+
+    #imagenes_entrenam, clases_entrenam, clases_entrenam_flat = process_dataset(X_train,y_train)
 
     #X_test, y_test, class_counts2 = readOriginal(test_file)
     #X_test,y_test = mezclar(X_test,y_test)
-    #imagenes_eval, clases_eval, clases_eval_flat = preprocess_dataset(X_test,y_test)
-    
+    #imagenes_eval, clases_eval, clases_eval_flat = process_dataset(X_test,y_test)
+    showPreprocessResult()
+
     #plot_histograms(
     #    'Class Distribution between Test Data and New Training Data',
     #    CLASS_TYPES, class_counts2, class_counts1,'b','r')  #get finalVS.png
-    
+
     #new_data = {'features': imagenes_entrenam, 'labels': clases_entrenam_flat}
     #save_data(new_data, train_processed)
     #new_data = {'features': imagenes_eval, 'labels': clases_eval_flat}
     #save_data(new_data, test_processed)
-    
+
     #-----------------------------------------------------------------------------
     #sortTestFile()
-    
+
     #-----------------------------------------------------------------------------
     #extendSortedTest()
     #-----------------------------------------------------------------------------
-    
+
     #shuffleExtendedSortedTestFile()
-    
+
     #-----------------------------------------------------------------------------
     #X_test_extended, y_test_extended, class_counts1 = readOriginal(
     #    test_extened)
-    #imagenes_eval, clases_eval, clases_eval_flat = preprocess_dataset(
+    #imagenes_eval, clases_eval, clases_eval_flat = process_dataset(
     #    X_test_extended, y_test_extended)
     #new_data = {'features': imagenes_eval, 'labels': clases_eval_flat}
     #save_data(new_data, test_processed_extended)
 
-    #X_test, y_test, class_counts1 = readOriginal(test_extened)
+    #X_test, y_test, class_counts1 = readOriginal(test_file)
     #X_test_extended, y_test_extended, class_counts2 = readOriginal(
     #    test_processed_extended)
 
     #plot_histograms('Class Distribution across New Extended Test Data',
     #                CLASS_TYPES, class_counts1, class_counts2, 'g', 'm')
+    #-----------------------------------------------------------------------------
+    #showAugmentSamples()
+    #-----------------------------------------------------------------------------
+#showFlippledImages()
