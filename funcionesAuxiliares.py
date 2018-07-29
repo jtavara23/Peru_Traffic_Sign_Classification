@@ -31,10 +31,13 @@ def flatten_layer(layer):
 
 """
 
+
 def readData(file):
 
     with open(file, mode='rb') as f:
-        data = pickle.load(f,encoding='latin1')#Pickle incompatability of numpy arrays between Python 2 and 3, latin1 seems to work
+        data = pickle.load(
+            f, encoding='latin1'
+        )  #Pickle incompatability of numpy arrays between Python 2 and 3, latin1 seems to work
 
     X_file, y_file = data['features'], data['labels']
 
@@ -42,24 +45,26 @@ def readData(file):
 
 
 # display an image
-def display(img):
-    
-    img = img.reshape(32,32)
+def display(img, tipo, mod):
+
+    if (mod):
+        img = img.reshape(32, 32)
     plt.axis('off')
     #plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), cmap='binary')
-    plt.imshow(img, cmap='binary')
+    plt.imshow(img, cmap=tipo)  #deafult was binary
     #plt.imshow(img)
     plt.show()
+
+
 # Strutified shuffle is used insted of simple shuffle in order to achieve sample balancing
-    # or equal number of examples in each of 10 classes.
+# or equal number of examples in each of 10 classes.
 # Since there are different number of examples for each 10 classes in the MNIST data you may
-    # also use simple shuffle.
+# also use simple shuffle.
 def stratified_shuffle(labels, num_classes):
-    ix = np.argsort(labels).reshape((num_classes,-1))
+    ix = np.argsort(labels).reshape((num_classes, -1))
     for i in range(len(ix)):
         np.random.shuffle(ix[i])
     return ix.T.reshape((-1))
-
 
 
 #Function used to plot 9 images in a 3x3 grid, and writing the true and predicted classes below each image.
@@ -87,8 +92,9 @@ def plot_images(images, cls_true, cls_pred=None):
         ax.set_xticks([])
         ax.set_yticks([])
 
+
 #Function for plotting examples of images from the test-set that have been mis-classified.
-def plot_example_errors(cls_pred, correct,images, labels_flat):
+def plot_example_errors(cls_pred, correct, images, labels_flat):
     # This function is called from print_test_accuracy() below.
 
     # cls_pred is an array of the predicted class-number for
@@ -99,34 +105,32 @@ def plot_example_errors(cls_pred, correct,images, labels_flat):
 
     # Negate the boolean array.
     incorrect = (correct == False)
-    
+
     # Get the images from the test-set that have been
     # incorrectly classified.
     images = images[incorrect]
-    
+
     # Get the predicted classes for those images.
     cls_pred = cls_pred[incorrect]
 
     # Get the true classes for those images.
     cls_true = labels_flat[incorrect]
-    
-    # Plot the first 9 images.
-    plot_images(images=images[0:16],
-                cls_true=cls_true[0:16],
-                cls_pred=cls_pred[0:16])
 
-def plot_confusion_matrix(cls_pred,cls_true,num_classes):
+    # Plot the first 9 images.
+    plot_images(
+        images=images[0:16], cls_true=cls_true[0:16], cls_pred=cls_pred[0:16])
+
+
+def plot_confusion_matrix(cls_pred, cls_true, num_classes):
     # This is called from print_test_accuracy() below.
 
     # cls_pred is an array of the predicted classifications for the test-set
 
     # cls_true is an array of the true classifications for the test-set
-    
-    
-    # Get the confusion matrix using sklearn.   
+
+    # Get the confusion matrix using sklearn.
     from sklearn.metrics import confusion_matrix
-    cm = confusion_matrix(y_true=cls_true,
-                          y_pred=cls_pred)
+    cm = confusion_matrix(y_true=cls_true, y_pred=cls_pred)
 
     # Print the confusion matrix as text.
     #print(cm)
@@ -137,24 +141,28 @@ def plot_confusion_matrix(cls_pred,cls_true,num_classes):
     plt.title("Matriz de Confusion")
     plt.colorbar()
     tick_marks = np.arange(num_classes)
-    plt.xticks(tick_marks, range(num_classes),rotation=45)
+    plt.xticks(tick_marks, range(num_classes), rotation=45)
     plt.yticks(tick_marks, range(num_classes))
-    
 
     thresh = cm.max() / 2.
     #cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
     import itertools
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, cm[i, j], horizontalalignment="center", color="white" if cm[i, j] > thresh else "black")
-
+        plt.text(
+            j,
+            i,
+            cm[i, j],
+            horizontalalignment="center",
+            color="white" if cm[i, j] > thresh else "black")
 
     plt.xlabel('Predecida')
     plt.ylabel('Deseada')
 
-def plot_conv_weights(w,xs,ys, input_channel=0):
+
+def plot_conv_weights(w, xs, ys, input_channel=0):
     # Assume weights are TensorFlow ops for 4-dim variables
     # e.g. weights_conv1 or weights_conv2.
-    
+
     # Retrieve the values of the weight-variables from TensorFlow.
     # A feed-dict is not necessary because nothing is calculated.
     #w = session.run(weights)
@@ -167,35 +175,39 @@ def plot_conv_weights(w,xs,ys, input_channel=0):
 
     # Number of filters used in the conv. layer.
     num_filters = w.shape[3]
-    print (num_filters)
-    
+    print(num_filters)
+
     # Create figure with a grid of sub-plots.
     fig, axes = plt.subplots(xs, ys)
 
     # Plot all the filter-weights.
     for i, ax in enumerate(axes.flat):
         # Only plot the valid filter-weights.
-        if i<num_filters:
+        if i < num_filters:
             # Get the weights for the i'th filter of the input channel.
             # See new_conv_layer() for details on the format
             # of this 4-dim tensor.
             img = w[:, :, input_channel, i]
 
             # Plot image.
-            ax.imshow(img, vmin=w_min, vmax=w_max,
-                      interpolation='nearest', cmap='seismic')
-        
+            ax.imshow(
+                img,
+                vmin=w_min,
+                vmax=w_max,
+                interpolation='nearest',
+                cmap='seismic')
+
         # Remove ticks from the plot.
         ax.set_xticks([])
         ax.set_yticks([])
-    
+
     # Ensure the plot is shown correctly with multiple plots
     # in a single Notebook cell.
     plt.show()
 
 
 #def plot_conv_layer(sess, layer, image,xs,ys):
-def plot_conv_layer(values,xs,ys):
+def plot_conv_layer(values, xs, ys):
     # Assume layer is a TensorFlow op that outputs a 4-dim tensor
     # which is the output of a convolutional layer,
     # e.g. layer_conv1 or layer_conv2.
@@ -218,7 +230,7 @@ def plot_conv_layer(values,xs,ys):
     # Plot the output images of all the filters.
     for i, ax in enumerate(axes.flat):
         # Only plot the images for valid filters.
-        if i<num_filters:
+        if i < num_filters:
             # Get the output image of using the i'th filter.
             # See new_conv_layer() for details on the format
             # of this 4-dim tensor.
@@ -226,14 +238,15 @@ def plot_conv_layer(values,xs,ys):
 
             # Plot image.
             ax.imshow(img, interpolation='nearest', cmap='binary')
-        
+
         # Remove ticks from the plot.
         ax.set_xticks([])
         ax.set_yticks([])
-    
+
     # Ensure the plot is shown correctly with multiple plots
     # in a single Notebook cell.
     plt.show()
+
 
 """
 # Plot with legend as before
