@@ -30,7 +30,8 @@ test_file = '../signals_database/traffic-signs-data/testData.p'
 signnames = read_csv(
     "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
 
-train_flipped_file = '../signals_database/traffic-signs-data/trainFlipped3.p'
+train_flipped_file = '../signals_database/traffic-signs-data/trainFlipped3.p'  #WRONG FLIPPED VERSION!
+train_flippedCmp_file = '../signals_database/traffic-signs-data/trainFlippedCmp.p'  # GODD VERSION, NOT WORKED YET
 train_extended_file = '../signals_database/traffic-signs-data/trainExtended8.p'
 train_processed = '../signals_database/traffic-signs-data/trainProcessed.p'
 test_processed = '../signals_database/traffic-signs-data/testProcessed.p'
@@ -40,8 +41,27 @@ test_extened = '../signals_database/traffic-signs-data/testExtended.p'
 test_processed_extended = '../signals_database/traffic-signs-data/testExtendedProcessed.p'
 
 #======================================================================================================
+# Classes of signs that, when flipped horizontally, should still be classified as the same class
+self_flippable_horizontally = np.array(
+    [11, 12, 13, 15, 17, 18, 22, 26, 30, 35])
+# Classes of signs that, when flipped vertically, should still be classified as the same class
+self_flippable_vertically = np.array([1, 5, 12, 15, 17])
+# Classes of signs that, when flipped horizontally and then vertically, should still be classified as the same class
+self_flippable_both = np.array([32, 40])
+# Classes of signs that, when flipped horizontally, would still be meaningful, but should be classified as some other class
+cross_flippable = np.array([
+    [19, 20],
+    [33, 34],
+    [36, 37],
+    [38, 39],
+    [20, 19],
+    [34, 33],
+    [37, 36],
+    [39, 38],
+])
 
 
+#======================================================================================================
 # Print iterations progress
 def print_progress(iteration, total):
     """
@@ -170,32 +190,12 @@ def flip_extend(X, y):
     -------
     A tuple of X and y.    
     """
-    # Classes of signs that, when flipped horizontally, should still be classified as the same class
-    self_flippable_horizontally = np.array(
-        [11, 12, 13, 15, 17, 18, 22, 26, 30, 35])
-    # Classes of signs that, when flipped vertically, should still be classified as the same class
-    #self_flippable_vertically = np.array([1, 5, 12, 15, 17])
-    self_flippable_vertically = np.array([1, 5])
-    # Classes of signs that, when flipped horizontally and then vertically, should still be classified as the same class
-    self_flippable_both = np.array([32, 40])
-    # Classes of signs that, when flipped horizontally, would still be meaningful, but should be classified as some other class
-    cross_flippable = np.array([
-        [19, 20],
-        [33, 34],
-        [36, 37],
-        [38, 39],
-        [20, 19],
-        [34, 33],
-        [37, 36],
-        [39, 38],
-    ])
-    num_classes = 43
 
     X_extended = np.empty(
         [0, X.shape[1], X.shape[2], X.shape[3]], dtype=X.dtype)
     y_extended = np.empty([0], dtype=y.dtype)
 
-    for c in range(num_classes):
+    for c in range(NUM_CLASSES):
         # First copy existing data for this class
         X_extended = np.append(X_extended, X[y == c], axis=0)
         # If we can flip images of this class horizontally and they would still belong to said class...
@@ -214,11 +214,11 @@ def flip_extend(X, y):
             y_extended,
             np.full((X_extended.shape[0] - y_extended.shape[0]), c, dtype=int))
 
-        # If we can flip images of this class vertically and they would still belong to said class...
+        # If we can flip images of this class vertically and they would still belong to same class(ALL of them for this case)...
         if c in self_flippable_vertically:
             # ...Copy their flipped versions into extended array.
             X_extended = np.append(
-                X_extended, X_extended[y_extended == c][:, ::-1, :, :], axis=0)
+                X_extended, X[y == c][:, ::-1, :, :], axis=0)
         # Fill labels for added images set to current class.
         y_extended = np.append(
             y_extended,
@@ -228,9 +228,7 @@ def flip_extend(X, y):
         if c in self_flippable_both:
             # ...Copy their flipped versions into extended array.
             X_extended = np.append(
-                X_extended,
-                X_extended[y_extended == c][:, ::-1, ::-1, :],
-                axis=0)
+                X_extended, X[y == c][:, ::-1, ::-1, :], axis=0)
         # Fill labels for added images set to current class.
         y_extended = np.append(
             y_extended,
@@ -465,44 +463,95 @@ def createExtendedDS(X_train, y_train, class_counts, num_times,
 #----------------------------------------------------------------------------------------
 
 
+def plot_flipped_examples(X_origin, X_data, y_data, n_examples):
+    #[X_data] para mostrar data y [y_data] para analizar indices
+    #""" data NEEDS TO BE SORTED in order to work properly!!!!
+    global IMAGE_SHAPE
+    CLASS_TYPES, init_per_class, class_counts = np.unique(
+        y_data, return_index=True, return_counts=True)
+    col_width = max(len(name) for name in signnames)
+
+    rows = len(CLASS_TYPES)
+    columns = n_examples + 1
+
+    fig = plt.figure(figsize=(rows, columns))
+    fig.subplots_adjust(hspace=0.0, wspace=0.0)
+    pos = 0
+    for c, c_index_init, c_count in zip(CLASS_TYPES, init_per_class,
+                                        class_counts):
+        print(c, " ", c_index_init, " to ", c_index_init + c_count)
+        print("Class %i: %-*s  %s samples" % (c, col_width, signnames[c],
+                                              str(c_count)))
+        random_indices = random.sample(
+            range(c_index_init, c_index_init + c_count), n_examples)
+        print("Chosen:", random_indices)
+
+        axis = fig.add_subplot(rows, columns, pos + 1, xticks=[], yticks=[])
+        axis.imshow(X_origin[random_indices[0]].reshape((IMAGE_SHAPE)))
+        axis = fig.add_subplot(rows, columns, pos + 2, xticks=[], yticks=[])
+        axis.imshow(X_data[random_indices[0]].reshape((IMAGE_SHAPE)))
+        pos += 2
+        print(
+            "--------------------------------------------------------------------------------------\n"
+        )
+
+    plt.show()
+
+
 def showFlippledImages():
-    self_flippable_horizontally = np.array(
-        [11, 12, 13, 15, 17, 18, 22, 26, 30, 35])
-    # Classes of signs that, when flipped vertically, should still be classified as the same class
-    #self_flippable_vertically = np.array([1, 5, 12, 15, 17])
-    self_flippable_vertically = np.array([1, 5])
-    # Classes of signs that, when flipped horizontally and then vertically, should still be classified as the same class
-    self_flippable_both = np.array([32, 40])
-    # Classes of signs that, when flipped horizontally, would still be meaningful, but should be classified as some other class
-    cross_flippable = np.array([
-        [19, 20],
-        [33, 34],
-        [36, 37],
-        [38, 39],
-        [20, 19],
-        [34, 33],
-        [37, 36],
-        [39, 38],
-    ])
-    num_classes = 43
+    X, y, _ = readOriginal(train_file)
+    X_original = np.empty(
+        [0, X.shape[1], X.shape[2], X.shape[3]], dtype=X.dtype)
     X_result = np.empty([0, X.shape[1], X.shape[2], X.shape[3]], dtype=X.dtype)
     Y_result = np.empty([0], dtype=y.dtype)
 
-    #for c in range
+    for c in range(NUM_CLASSES):
+        """
+        if c in self_flippable_horizontally:
+            # ...Copy their flipped versions into extended array.
+            X_original = np.append(X_original, X[y == c], axis=0)
+            X_result = np.append(X_result, X[y == c][:, :, ::-1, :], axis=0)
+        """
+        #-----------------------------------------
+        """
+        if c in cross_flippable[:, 0]:
+            X_original = np.append(X_original, X[y == c], axis=0)
+            flip_class = cross_flippable[cross_flippable[:, 0] == c][0][1]
+            X_result = np.append(
+                X_result, X[y == c][:, :, ::-1, :], axis=0
+            )  #change X[y == flip_class] to X[y == c] for visualization purposes
+        """
+        """
+        if c in self_flippable_vertically:
+            X_original = np.append(X_original, X[y == c], axis=0)
+            # ...Copy their flipped versions into extended array.
+            X_result = np.append(X_result, X[y == c][:, ::-1, :, :], axis=0)
+        """
+        """
+        if c in self_flippable_both:
+            X_original = np.append(X_original, X[y == c], axis=0)
+            # ...Copy their flipped versions into extended array.
+            X_result = np.append(X_result, X[y == c][:, ::-1, ::-1, :], axis=0)
+        """
+        Y_result = np.append(
+            Y_result,
+            np.full((X_result.shape[0] - Y_result.shape[0]), c, dtype=int))
+
+    plot_flipped_examples(X_original, X_result, Y_result, 1)
 
 
 def showAugmentSamples():
     x_train, y_train, _ = readOriginal(train_file)
     X_input, y_output = mezclar(x_train, y_train)
-    cant_conv = 8
-    cant_orig_imgs = 5
+    cant_conv = 5
+    cant_orig_imgs = 3  #number of images TAKEN AS BASED
     ind = range(0, cant_orig_imgs)
 
     X_input = (X_input / 255.).astype(np.float32)
 
     fig = plt.figure(figsize=(cant_orig_imgs, cant_conv + 1))
     fig.subplots_adjust(hspace=0.1, wspace=0.2)
-
+    #plot imgs in a vertical way
     more = False
     for k in range(cant_conv):
         batch_iterator = AugmentedSignsBatchIterator(
@@ -513,7 +562,8 @@ def showAugmentSamples():
                 if more == False:
                     axis = fig.add_subplot(
                         cant_orig_imgs,
-                        cant_conv + 1, (i + j),
+                        cant_conv + 1,
+                        (i + j),  #(i+j) means start pos. of new row
                         xticks=[],
                         yticks=[])
                     axis.imshow(X_input[ind[i]].reshape((IMAGE_SHAPE)))
@@ -622,7 +672,7 @@ def doFlip():
 
     #plot_histograms('Class Distribution Original Training data vs New Flipped Training Data', CLASS_TYPES,class_counts1,class_counts2,'b','r')# get flippedImg_59698.png
     new_data = {'features': X_train, 'labels': y_train}
-    save_data(new_data, train_flipped_file)
+    save_data(new_data, train_flippedCmp_file)
 
 
 def doExtended():
@@ -667,7 +717,7 @@ def shuffleExtendedSortedTestFile():
     save_data(new_data, test_extened)
 
 
-def showPreprocessResult():
+def showProcessResult():
     X, y, _ = readOriginal(train_processed)
     plot_some_examples(X, y, 3)
     #img = X[10].reshape(32, 32)
@@ -697,7 +747,7 @@ if __name__ == "__main__":
     #X_test, y_test, class_counts2 = readOriginal(test_file)
     #X_test,y_test = mezclar(X_test,y_test)
     #imagenes_eval, clases_eval, clases_eval_flat = process_dataset(X_test,y_test)
-    showPreprocessResult()
+    #showProcessResult()
 
     #plot_histograms(
     #    'Class Distribution between Test Data and New Training Data',
@@ -734,4 +784,15 @@ if __name__ == "__main__":
     #-----------------------------------------------------------------------------
     #showAugmentSamples()
     #-----------------------------------------------------------------------------
-#showFlippledImages()
+    #showFlippledImages()
+    #-----------------------------------------------------------------------------
+    # +++++++++++ DISCOVER BUG IN FLIPPED FILE
+    """
+    X_test, y_test, class_counts1 = readOriginal(train_flipped_file)
+    X_test_extended, y_test_extended, class_counts2 = readOriginal(
+        train_flippedCmp_file)
+
+    plot_histograms('Class Distribution across New Extended Test Data',
+                    CLASS_TYPES, class_counts1, class_counts2, 'g', 'm')
+    """
+    
