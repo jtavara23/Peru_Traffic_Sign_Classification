@@ -136,7 +136,7 @@ def mezclar(X, y):
     return X, y
 
 
-def process_dataset(X, y):
+def process_dataset(X, y, flag):
     """
     Performs feature scaling, one-hot encoding of labels and shuffles the data if labels are provided.
     Assumes original dataset is sorted by labels.
@@ -156,13 +156,14 @@ def process_dataset(X, y):
     X = 0.299 * X[:, :, :, 0] + 0.587 * X[:, :, :, 1] + 0.114 * X[:, :, :, 2]
     #Scale features to be in [0, 1]
     X = (X / 255.).astype(np.float32)
-    """
-    for i in range(X.shape[0]):
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            X[i] = exposure.equalize_adapthist(X[i])
-        print_progress(i + 1, X.shape[0])
-    """
+    #"""
+    if flag:
+        for i in range(X.shape[0]):
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                X[i] = exposure.equalize_adapthist(X[i])
+            #print_progress(i + 1, X.shape[0])
+    #"""
 
     # Convert to one-hot encoding. Convert back with `y = y.nonzero()[1]`
     y_flatten = y
@@ -741,9 +742,20 @@ if __name__ == "__main__":
     #doExtended()
 
     #-----------------------------------------------------------------------------
+    X_train, y_train, _ = readOriginal(test_file)
+    imagenes_entrenam, clases_entrenam, clases_entrenam_flat = process_dataset(
+        X_train[20:24], y_train[20:24], False)
+    print(imagenes_entrenam.shape)
+    print(imagenes_entrenam[1])
+    display(imagenes_entrenam[1], 'binary', True)
+    print("---------------------------")
 
-    #imagenes_entrenam, clases_entrenam, clases_entrenam_flat = process_dataset(X_train,y_train)
-
+    imagenes_entrenam, clases_entrenam, clases_entrenam_flat = process_dataset(
+        X_train[20:24], y_train[20:24], True)
+    print(imagenes_entrenam.shape)
+    print("---------------------------")
+    print(imagenes_entrenam[1])
+    display(imagenes_entrenam[1], 'binary', True)
     #X_test, y_test, class_counts2 = readOriginal(test_file)
     #X_test,y_test = mezclar(X_test,y_test)
     #imagenes_eval, clases_eval, clases_eval_flat = process_dataset(X_test,y_test)
@@ -795,4 +807,3 @@ if __name__ == "__main__":
     plot_histograms('Class Distribution across New Extended Test Data',
                     CLASS_TYPES, class_counts1, class_counts2, 'g', 'm')
     """
-    
