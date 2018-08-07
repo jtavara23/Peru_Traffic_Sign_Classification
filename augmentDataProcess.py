@@ -602,7 +602,7 @@ def plot_some_examples(X_data, y_data, n_examples):
         print(random_indices)
         for i in range(n_examples):
             axis = fig.add_subplot(1, n_examples, i + 1, xticks=[], yticks=[])
-            if (IMAGE_SHAPE == (32, 32, 1)):
+            if (X_data[0].shape == (32, 32, 1)):
                 IMAGE_SHAPE = (32, 32)
             axis.imshow(
                 X_data[random_indices[i]].reshape((IMAGE_SHAPE)), cmap='gray')
@@ -610,7 +610,7 @@ def plot_some_examples(X_data, y_data, n_examples):
             "--------------------------------------------------------------------------------------\n"
         )
         plt.show()
-        if c == 5:
+        if c == 3:
             break
 
 
@@ -742,20 +742,17 @@ if __name__ == "__main__":
     #doExtended()
 
     #-----------------------------------------------------------------------------
-    X_train, y_train, _ = readOriginal(test_file)
-    imagenes_entrenam, clases_entrenam, clases_entrenam_flat = process_dataset(
-        X_train[20:24], y_train[20:24], False)
-    print(imagenes_entrenam.shape)
-    print(imagenes_entrenam[1])
-    display(imagenes_entrenam[1], 'binary', True)
-    print("---------------------------")
+    #X_train, y_train, _ = readOriginal(train_file)
+    #imagenes_entrenam, clases_entrenam, clases_entrenam_flat = process_dataset(
+    #    X_train, y_train, False)
+    #plot_some_examples(imagenes_entrenam, y_train, 5)
+    #***********************
+    #imagenes_entrenam, clases_entrenam, clases_entrenam_flat = process_dataset(
+    #    X_train, y_train, True)
 
-    imagenes_entrenam, clases_entrenam, clases_entrenam_flat = process_dataset(
-        X_train[20:24], y_train[20:24], True)
-    print(imagenes_entrenam.shape)
-    print("---------------------------")
-    print(imagenes_entrenam[1])
-    display(imagenes_entrenam[1], 'binary', True)
+    #plot_some_examples(imagenes_entrenam, y_train, 5)
+    #-----------------------------------------------------------------------------
+
     #X_test, y_test, class_counts2 = readOriginal(test_file)
     #X_test,y_test = mezclar(X_test,y_test)
     #imagenes_eval, clases_eval, clases_eval_flat = process_dataset(X_test,y_test)
@@ -799,11 +796,11 @@ if __name__ == "__main__":
     #showFlippledImages()
     #-----------------------------------------------------------------------------
     # +++++++++++ DISCOVER BUG IN FLIPPED FILE
-    """
+    #"""
     X_test, y_test, class_counts1 = readOriginal(train_flipped_file)
     X_test_extended, y_test_extended, class_counts2 = readOriginal(
         train_flippedCmp_file)
 
     plot_histograms('Class Distribution across New Extended Test Data',
                     CLASS_TYPES, class_counts1, class_counts2, 'g', 'm')
-    """
+    #"""
