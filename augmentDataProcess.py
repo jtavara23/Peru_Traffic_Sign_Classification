@@ -25,19 +25,19 @@ IMAGE_SHAPE = (0, 0, 0)
 CLASS_TYPES = []
 
 #======================================================================================================
+#Taken 1st from readTrafficSigns.py then convertPickle.py
 train_file = '../signals_database/traffic-signs-data/trainData.p'  #originally sorted
 test_file = '../signals_database/traffic-signs-data/testData.p'
 signnames = read_csv(
     "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
 
-train_flipped_file = '../signals_database/traffic-signs-data/trainFlipped3.p'  #WRONG FLIPPED VERSION!
-train_flippedCmp_file = '../signals_database/traffic-signs-data/trainFlippedCmp.p'  # GODD VERSION, NOT WORKED YET
+train_flipped_file = '../signals_database/traffic-signs-data/trainFlipped.p'
 train_extended_file = '../signals_database/traffic-signs-data/trainExtended8.p'
 train_processed = '../signals_database/traffic-signs-data/trainProcessed.p'
 test_processed = '../signals_database/traffic-signs-data/testProcessed.p'
 test_sorted = '../signals_database/traffic-signs-data/testSorted.p'
-test_sorted_extened = '../signals_database/traffic-signs-data/testSorted_Extended.p'
-test_extened = '../signals_database/traffic-signs-data/testExtended.p'
+test_sorted_extended = '../signals_database/traffic-signs-data/testSorted_Extended.p'
+test_extended = '../signals_database/traffic-signs-data/testExtended.p'
 test_processed_extended = '../signals_database/traffic-signs-data/testExtendedProcessed.p'
 
 #======================================================================================================
@@ -673,7 +673,7 @@ def doFlip():
 
     #plot_histograms('Class Distribution Original Training data vs New Flipped Training Data', CLASS_TYPES,class_counts1,class_counts2,'b','r')# get flippedImg_59698.png
     new_data = {'features': X_train, 'labels': y_train}
-    save_data(new_data, train_flippedCmp_file)
+    save_data(new_data, train_flipped_file)
 
 
 def doExtended():
@@ -685,6 +685,28 @@ def doExtended():
     #plot_histograms('Class Distribution  New Flipped Training Data vs New Extended Training Data', CLASS_TYPES, class_counts1, class_counts2,'b','r')# get ExtendedImg_313672.png
     new_data = {'features': X_train_extended, 'labels': y_train_extended}
     save_data(new_data, train_extended_file)
+
+
+def doScaling_Normalization():
+    X_train, y_train, class_counts1 = readOriginal(train_file)
+    imagenes_entrenam, clases_entrenam, clases_entrenam_flat = process_dataset(
+        X_train, y_train, True)
+
+    plot_some_examples(imagenes_entrenam, y_train, 5)
+    new_data = {'features': imagenes_entrenam, 'labels': clases_entrenam_flat}
+    save_data(new_data, train_processed)
+    #----------
+    X_test, y_test, class_counts2 = readOriginal(test_file)
+    X_test, y_test = mezclar(X_test, y_test)
+    imagenes_eval, clases_eval, clases_eval_flat = process_dataset(
+        X_test, y_test, True)
+
+    plot_histograms(
+        'Class Distribution between Test Data and New Training Data',
+        CLASS_TYPES, class_counts2, class_counts1, 'b', 'r')  #get finalVS.png
+
+    new_data = {'features': imagenes_eval, 'labels': clases_eval_flat}
+    save_data(new_data, test_processed)
 
 
 def sortTestFile():
@@ -705,21 +727,21 @@ def extendSortedTest():
         'features': X_test_sorted_extended,
         'labels': y_test_sorted_extended
     }
-    save_data(new_data, test_sorted_extened)
+    save_data(new_data, test_sorted_extended)
 
 
 def shuffleExtendedSortedTestFile():
     X_test_sorted_extended, y_test_sorted_extended, class_counts1 = readOriginal(
-        test_sorted_extened)
+        test_sorted_extended)
     #plot_some_examples(X_test_sorted_extended, y_test_sorted_extended,3)
     X_test_extended, y_test_extended = mezclar(X_test_sorted_extended,
                                                y_test_sorted_extended)
     new_data = {'features': X_test_extended, 'labels': y_test_extended}
-    save_data(new_data, test_extened)
+    save_data(new_data, test_extended)
 
 
-def showProcessResult():
-    X, y, _ = readOriginal(train_processed)
+def showProcessResult(file):
+    X, y, _ = readOriginal(file)
     plot_some_examples(X, y, 3)
     #img = X[10].reshape(32, 32)
     #plt.axis('off')
@@ -727,80 +749,60 @@ def showProcessResult():
     #plt.show()
 
 
+def temporalTestNormalization():
+    X_test_extended, y_test_extended, class_counts1 = readOriginal(
+        test_extended)
+    imagenes_eval, clases_eval, clases_eval_flat = process_dataset(
+        X_test_extended, y_test_extended, True)
+    new_data = {'features': imagenes_eval, 'labels': clases_eval_flat}
+    save_data(new_data, test_processed_extended)
+
+
+def plotCmpnNewTestHistograms():
+    X_test, y_test, class_counts1 = readOriginal(test_file)
+    X_test_extended, y_test_extended, class_counts2 = readOriginal(
+        test_processed_extended)
+    plot_histograms('Class Distribution across New Extended Test Data',
+                    CLASS_TYPES, class_counts1, class_counts2, 'g', 'm')
+
+
 if __name__ == "__main__":
     print("Finish importing packages")
-    #---------------------------PLOTTING HISTOGRAMS--------------------------------------------------
-    #showHistogram(train_file,'Class Distribution on Test Data')
-    #plot_some_examples(X_train, y_train,3)
+    #X_train, y_train, _ = readOriginal(train_file)
+    #showHistogram(train_file,'Class Distribution on Initial Data')
+    #plot_some_examples(X_train, y_train,5)
+    #X_test, y_test, _ = readOriginal(test_file)
+    #showHistogram(X_test,'Class Distribution on Test Data')
+    #plot_some_examples(X_test, y_test,5)
 
     #-----------------------------------------------------------------------------
     # Prepare a dataset with flipped classes
     #doFlip()
-
+    #showHistogram(train_flipped_file,"Class Distribution Original Training Data vs New Flipped Traininig Data")
     #-----------------------------------------------------------------------------
     # Prepare a dataset with extended classes
     #doExtended()
 
     #-----------------------------------------------------------------------------
-    #X_train, y_train, _ = readOriginal(train_file)
-    #imagenes_entrenam, clases_entrenam, clases_entrenam_flat = process_dataset(
-    #    X_train, y_train, False)
-    #plot_some_examples(imagenes_entrenam, y_train, 5)
-    #***********************
-    #imagenes_entrenam, clases_entrenam, clases_entrenam_flat = process_dataset(
-    #    X_train, y_train, True)
-
-    #plot_some_examples(imagenes_entrenam, y_train, 5)
+    #doScaling_Normalization() #For training and Testing dataset
+    #showProcessResult(train_processed)
     #-----------------------------------------------------------------------------
 
-    #X_test, y_test, class_counts2 = readOriginal(test_file)
-    #X_test,y_test = mezclar(X_test,y_test)
-    #imagenes_eval, clases_eval, clases_eval_flat = process_dataset(X_test,y_test)
-    #showProcessResult()
-
-    #plot_histograms(
-    #    'Class Distribution between Test Data and New Training Data',
-    #    CLASS_TYPES, class_counts2, class_counts1,'b','r')  #get finalVS.png
-
-    #new_data = {'features': imagenes_entrenam, 'labels': clases_entrenam_flat}
-    #save_data(new_data, train_processed)
-    #new_data = {'features': imagenes_eval, 'labels': clases_eval_flat}
-    #save_data(new_data, test_processed)
-
-    #-----------------------------------------------------------------------------
+    #-------JUST FOR CONFIRMATION ON THE TESTING PHASE-------------------------------
     #sortTestFile()
-
-    #-----------------------------------------------------------------------------
     #extendSortedTest()
+    #plotCmpnNewTestHistograms()
+
     #-----------------------------------------------------------------------------
 
     #shuffleExtendedSortedTestFile()
 
     #-----------------------------------------------------------------------------
-    #X_test_extended, y_test_extended, class_counts1 = readOriginal(
-    #    test_extened)
-    #imagenes_eval, clases_eval, clases_eval_flat = process_dataset(
-    #    X_test_extended, y_test_extended)
-    #new_data = {'features': imagenes_eval, 'labels': clases_eval_flat}
-    #save_data(new_data, test_processed_extended)
+    #only if [extendSortedTest] doesnt work, also update [doScaling_Normalization] for testing file : put flag to False
+    temporalTestNormalization()
 
-    #X_test, y_test, class_counts1 = readOriginal(test_file)
-    #X_test_extended, y_test_extended, class_counts2 = readOriginal(
-    #    test_processed_extended)
-
-    #plot_histograms('Class Distribution across New Extended Test Data',
-    #                CLASS_TYPES, class_counts1, class_counts2, 'g', 'm')
-    #-----------------------------------------------------------------------------
-    #showAugmentSamples()
     #-----------------------------------------------------------------------------
     #showFlippledImages()
     #-----------------------------------------------------------------------------
-    # +++++++++++ DISCOVER BUG IN FLIPPED FILE
-    #"""
-    X_test, y_test, class_counts1 = readOriginal(train_flipped_file)
-    X_test_extended, y_test_extended, class_counts2 = readOriginal(
-        train_flippedCmp_file)
-
-    plot_histograms('Class Distribution across New Extended Test Data',
-                    CLASS_TYPES, class_counts1, class_counts2, 'g', 'm')
-    #"""
+    #showAugmentSamples()
+    #-----------------------------------------------------------------------------
