@@ -16,6 +16,9 @@ from sklearn.utils import shuffle
 from skimage import exposure
 import warnings
 import sys
+#pip install tqdm
+from tqdm import tqdm
+from tqdm import trange
 
 #np.set_printoptions(threshold=np.nan)
 
@@ -31,14 +34,17 @@ test_file = '../signals_database/traffic-signs-data/testData.p'
 signnames = read_csv(
     "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
 
+train_normalized_file = '../signals_database/traffic-signs-data/trainNormalized.p'
 train_flipped_file = '../signals_database/traffic-signs-data/trainFlipped.p'
 train_extended_file = '../signals_database/traffic-signs-data/trainExtended8.p'
-train_processed = '../signals_database/traffic-signs-data/trainProcessed.p'
-test_processed = '../signals_database/traffic-signs-data/testProcessed.p'
+train_processed = '../signals_database/traffic-signs-data/trainProcessed.p'  #ready for trainingProcess
+
+test_normalized_file = '../signals_database/traffic-signs-data/testNormalized.p'  # just with clahe
+test_processed = '../signals_database/traffic-signs-data/testProcessed.p'  #not augmented
 test_sorted = '../signals_database/traffic-signs-data/testSorted.p'
 test_sorted_extended = '../signals_database/traffic-signs-data/testSorted_Extended.p'
-test_extended = '../signals_database/traffic-signs-data/testExtended.p'
-test_processed_extended = '../signals_database/traffic-signs-data/testExtendedProcessed.p'
+test_extended = '../signals_database/traffic-signs-data/testExtended.p'  #mixed
+test_processed_extended = '../signals_database/traffic-signs-data/testExtendedProcessed.p'  #ready for testingProcess
 
 #======================================================================================================
 # Classes of signs that, when flipped horizontally, should still be classified as the same class
@@ -136,7 +142,27 @@ def mezclar(X, y):
     return X, y
 
 
-def process_dataset(X, y, flag):
+def applyClahe(X):
+    X_ = []
+    for k in trange(X.shape[0]):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            X_rgb = exposure.equalize_adapthist(X[k], clip_limit=0.03)
+            X_.append(X_rgb)
+        #print_progress(k + 1, X.shape[0])
+    return (np.asarray(X_)).astype(np.float32)
+
+
+def normalizeData(X_data, y_data, class_counts, targetFile):
+    X_data = applyClahe(X_data)
+    plot_some_examples(X_data, y_data, 5)
+    new_data = {'features': X_data, 'labels': y_data}
+    save_data(new_data, targetFile)
+    print("Pickle saved.")
+
+
+#At the end of Augment Data
+def process_dataset(X, y):
     """
     Performs feature scaling, one-hot encoding of labels and shuffles the data if labels are provided.
     Assumes original dataset is sorted by labels.
@@ -156,15 +182,6 @@ def process_dataset(X, y, flag):
     X = 0.299 * X[:, :, :, 0] + 0.587 * X[:, :, :, 1] + 0.114 * X[:, :, :, 2]
     #Scale features to be in [0, 1]
     X = (X / 255.).astype(np.float32)
-    #"""
-    if flag:
-        for i in range(X.shape[0]):
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                X[i] = exposure.equalize_adapthist(X[i])
-            #print_progress(i + 1, X.shape[0])
-    #"""
-
     # Convert to one-hot encoding. Convert back with `y = y.nonzero()[1]`
     y_flatten = y
     y = np.eye(NUM_CLASSES)[y]
@@ -581,7 +598,7 @@ def showAugmentSamples():
     plt.show()
 
 
-def plot_some_examples(X_data, y_data, n_examples):
+def plot_some_examples(X_data, y_data, n_examples, breakAt=5):
     #[X_data] para mostrar data y [y_data] para analizar indices
     #""" data NEEDS TO BE SORTED in order to work properly!!!!
     global IMAGE_SHAPE
@@ -610,7 +627,7 @@ def plot_some_examples(X_data, y_data, n_examples):
             "--------------------------------------------------------------------------------------\n"
         )
         plt.show()
-        if c == 3:
+        if c == breakAt:
             break
 
 
@@ -690,7 +707,7 @@ def doExtended():
 def doScaling_Normalization():
     X_train, y_train, class_counts1 = readOriginal(train_file)
     imagenes_entrenam, clases_entrenam, clases_entrenam_flat = process_dataset(
-        X_train, y_train, True)
+        X_train, y_train)
 
     plot_some_examples(imagenes_entrenam, y_train, 5)
     new_data = {'features': imagenes_entrenam, 'labels': clases_entrenam_flat}
@@ -699,7 +716,7 @@ def doScaling_Normalization():
     X_test, y_test, class_counts2 = readOriginal(test_file)
     X_test, y_test = mezclar(X_test, y_test)
     imagenes_eval, clases_eval, clases_eval_flat = process_dataset(
-        X_test, y_test, True)
+        X_test, y_test)
 
     plot_histograms(
         'Class Distribution between Test Data and New Training Data',
@@ -768,12 +785,20 @@ def plotCmpnNewTestHistograms():
 
 if __name__ == "__main__":
     print("Finish importing packages")
+
     #X_train, y_train, _ = readOriginal(train_file)
     #showHistogram(train_file,'Class Distribution on Initial Data')
     #plot_some_examples(X_train, y_train,5)
+
     #X_test, y_test, _ = readOriginal(test_file)
     #showHistogram(X_test,'Class Distribution on Test Data')
     #plot_some_examples(X_test, y_test,5)
+    #--------------------NORMALIZE DATA---------------------------------------------------------
+    #x, y, cc = readOriginal(train_file)
+    #normalizeData(x, y, cc, train_normalized_file)
+    #x, y, cc = readOriginal(test_file)
+    #100%|####################################################| 12630/12630 [06:43<00:00, 31.33it/s]
+    #normalizeData(x, y, cc, test_normalized_file)
 
     #-----------------------------------------------------------------------------
     # Prepare a dataset with flipped classes
@@ -799,7 +824,7 @@ if __name__ == "__main__":
 
     #-----------------------------------------------------------------------------
     #only if [extendSortedTest] doesnt work, also update [doScaling_Normalization] for testing file : put flag to False
-    temporalTestNormalization()
+    #temporalTestNormalization()
 
     #-----------------------------------------------------------------------------
     #showFlippledImages()
