@@ -115,11 +115,11 @@ def inicializar_bias(shape):
 def flatten_layer(layer):
     # Get the shape of the input layer.
     layer_shape = layer.get_shape()
-    #print "Layer shape: ", layer_shape
+    #print("Layer shape: ", layer_shape)
     num_features = layer_shape[1:4].num_elements()
-    #print "num_features: ", num_features
+    #print("num_features: ", num_features)
     layer_flat = tf.reshape(layer, [-1, num_features])
-    #print "layer_flat: : ", layer_flat
+    #print("layer_flat: : ", layer_flat)
 
     return layer_flat, num_features
 
@@ -143,7 +143,7 @@ def conv_layer(nombre, entrada, num_inp_channels, filter_size, num_filters,
                 ksize=[1, 2, 2, 1],
                 strides=[1, 2, 2, 1],
                 padding='SAME')
-        #print nombre,": ",convolucion.get_shape(),"\n***********"
+        #print( nombre,": ",convolucion.get_shape(),"\n***********")
     return convolucion, pesos
 
 
@@ -157,7 +157,7 @@ def doPool(convolucion, size):
 
 def capa_fc(nombre, entrada, num_inputs, num_outputs, use_relu=True):
     with tf.name_scope(nombre):
-        #print entrada.get_shape()," multiplica ",num_inputs,num_outputs
+        #print( entrada.get_shape()," multiplica ",num_inputs,num_outputs)
         pesos = inicializar_pesos(shape=[num_inputs, num_outputs])
         biases = inicializar_bias([num_outputs])
         layer = tf.matmul(entrada, pesos) + biases
@@ -179,12 +179,12 @@ def create_cnn():
         'float',
         shape=[None, IMAGE_SHAPE[0], IMAGE_SHAPE[1], IMAGE_SHAPE[2]],
         name=NOMBRE_TENSOR_ENTRADA)
-    print "Numero clases", NUM_CLASSES
+    print( "Numero clases", NUM_CLASSES)
     # clases
     y_deseada = tf.placeholder(
         'float', shape=[None, NUM_CLASSES], name=NOMBRE_TENSOR_SALIDA_DESEADA)
 
-    #print "entradas shape ",entradas.get_shape() # =>(?, 32, 32, 1)
+    #print( "entradas shape ",entradas.get_shape() # =>(?, 32, 32, 1))
 
     #Aplicarmos dropout entre la capa FC y la capa de salida
     #keep_prob = tf.placeholder('float',name=NOMBRE_PROBABILIDAD)
@@ -235,7 +235,7 @@ def create_cnn():
     # 1st stage output
     pool1 = doPool(capa_conv1_drop, size = 4)
     shape = pool1.get_shape().as_list()
-    #print "Shpeee ", shape
+    #print( "Shpeee ", shape)
     pool1 = tf.reshape(pool1, [-1, shape[1] * shape[2] * shape[3]])
     
     # 2nd stage output
@@ -248,9 +248,9 @@ def create_cnn():
     pool3 = tf.reshape(capa_conv3_drop, [-1, shape[1] * shape[2] * shape[3]])
     
     layer_flat = tf.concat([pool1, pool2, pool3],1)
-    print "1:",layer_flat.get_shape()
+    print( "1:",layer_flat.get_shape())
     num_fc_layers = layer_flat.get_shape()[1]
-    print "2:",num_fc_layers
+    print( "2:",num_fc_layers)
     """
     #with tf.variable_scope('fc4'):
     #fc4 = fully_connected_relu(layer_flat, size = 1024)
@@ -268,9 +268,9 @@ def create_cnn():
 
     layer_flat = tf.concat([layer_flat1, layer_flat2, layer_flat3],
                            1)  #(?, 7168)
-    #print "1:",layer_flat.get_shape()
+    #print( "1:",layer_flat.get_shape())
     num_fc_layers = num_fc_layers1 + num_fc_layers2 + num_fc_layers3  # (7168)
-    #print "2:",num_fc_layers
+    #print( "2:",num_fc_layers)
     #"""
 
     #---------------------------Capa totalmente conectada--------------------------------------------
@@ -339,21 +339,21 @@ if __name__ == "__main__":
     signnames = read_csv(
         "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
 
-    print "reading trianing dataset"
+    print( "reading trianing dataset")
     X_train, y_train = readData(train_file)
-    print "reading testing dataset"
+    print( "reading testing dataset")
     X_test, y_test = readData(test_file)
 
-    #print X_train[0]
+    #print( X_train[0]
     NUM_TRAIN = y_train.shape[0]
     NUM_TEST = y_test.shape[0]
     IMAGE_SHAPE = X_train[0].shape
     NUM_CLASSES = len(set(y_train))
 
-    print "Number of training examples =", NUM_TRAIN
-    print "Number of testing examples =", NUM_TEST
-    print "Image data shape =", IMAGE_SHAPE
-    print "Number of classes =", NUM_CLASSES
+    print( "Number of training examples =", NUM_TRAIN)
+    print( "Number of testing examples =", NUM_TEST)
+    print( "Image data shape =", IMAGE_SHAPE)
+    print( "Number of classes =", NUM_CLASSES)
 
     class_indices, examples_per_class, class_counts = np.unique(
         y_train, return_index=True, return_counts=True)
@@ -369,13 +369,13 @@ if __name__ == "__main__":
 
     #cv2.imwrite('zexample1.png',X_train[200])
     #display(X_train[10])
-    #print X_train[10]
-    #print "**********************"
-    #print X_test[0]
+    #print( X_train[10])
+    #print( "**********************")
+    #print( X_test[0])
 
     #--------------------------------CREACION DE LA RED------------------------------------------------
     #"""
-    print "Inicio de creacion de la red"
+    print( "Inicio de creacion de la red")
     tf.reset_default_graph()
     sess = tf.Session()
     resumen, entradas, y_deseada, is_training, iterac_entren, optimizador, acierto, predictor = create_cnn(
@@ -395,13 +395,13 @@ if __name__ == "__main__":
 
     if ckpt and ckpt.model_checkpoint_path:
         saver.restore(sess, ckpt.model_checkpoint_path)
-        print("Sesion restaurada de: %s" % ckpt.model_checkpoint_path)
+        print(("Sesion restaurada de: %s" % ckpt.model_checkpoint_path))
 
     else:
-        print("No se encontro puntos de control.")
+        print(("No se encontro puntos de control."))
 
     ultima_iteracion = iterac_entren.eval(sess)
-    print "Ultimo modelo en la iteracion: ", ultima_iteracion
+    print( "Ultimo modelo en la iteracion: ", ultima_iteracion)
 
     epocas_completadas = 0
     indice_en_epoca = 0
@@ -429,11 +429,8 @@ if __name__ == "__main__":
 
         # Observar el progreso cada 'CHKP_REVISAR_PROGRESO' iteraciones
         if (i + 1) % CHKP_REVISAR_PROGRESO == 0:
-            print('Tiempo usado en %d iteraciones: %s ' %
-                  (i + 1 - ultima_iteracion,
-                   str(
-                       timedelta(
-                           seconds=int(round(time.time() - comienzo_time))))))
+            print(('Tiempo usado en %d iteraciones: %s ' %(i + 1 - ultima_iteracion,
+                   str(timedelta(seconds=int(round(time.time() - comienzo_time)))))))
             feed_dictx = {
                 entradas: batch_img_entrada,
                 y_deseada: batch_img_clase,
@@ -441,8 +438,8 @@ if __name__ == "__main__":
             }
             [resu, aciertos_train] = sess.run(
                 [resumen, acierto], feed_dict=feed_dictx)
-            print('En la iteracion %d , Acierto de Entrenamiento => %.4f ' %
-                  (i + 1, aciertos_train))
+            print(('En la iteracion %d , Acierto de Entrenamiento => %.4f ' %
+                  (i + 1, aciertos_train)))
 
             feed_dictx = {
                 entradas: imagenes_eval[:2000],
@@ -452,12 +449,12 @@ if __name__ == "__main__":
             [resu, aciertos_eval] = sess.run(
                 [resumen, acierto], feed_dict=feed_dictx)
             evalua_writer.add_summary(resu, i)
-            print('En la iteracion %d , Acierto de Evaluacion => %.4f \n' %
-                  (i + 1, aciertos_eval))
+            print(('En la iteracion %d , Acierto de Evaluacion => %.4f \n' %
+                  (i + 1, aciertos_eval)))
 
         #Crear 'punto de control' cuando se llego a las CHKP_GUARDAR_MODELO iteraciones
         if (i + 1) % CHKP_GUARDAR_MODELO == 0:
-            print('Guardando modelo en %d iteraciones....' % (i + 1))
+            print(('Guardando modelo en %d iteraciones....' % (i + 1)))
             saver.save(
                 sess,
                 rutaDeModelo + NOMBRE_MODELO,
@@ -470,8 +467,8 @@ if __name__ == "__main__":
         is_training: False
     }
     [resu, aciertos_train] = sess.run([resumen, acierto], feed_dict=feed_dictx)
-    print('En la iteracion %d , Acierto de Entrenamiento => %.4f ' %
-          (i + 1, aciertos_train))
+    print(('En la iteracion %d , Acierto de Entrenamiento => %.4f ' %
+          (i + 1, aciertos_train)))
     feed_dictx = {
         entradas: imagenes_eval[:2000],
         y_deseada: clases_eval[:2000],
@@ -479,9 +476,9 @@ if __name__ == "__main__":
     }
     [resu, aciertos_eval] = sess.run([resumen, acierto], feed_dict=feed_dictx)
     evalua_writer.add_summary(resu, i)
-    print('En la iteracion %d , Acierto de Evaluacion => %.4f \n' %
-          (i + 1, aciertos_eval))
-    print('Guardando modelo en %d iteraciones....' % (i + 1))
+    print(('En la iteracion %d , Acierto de Evaluacion => %.4f \n' %
+          (i + 1, aciertos_eval)))
+    print(('Guardando modelo en %d iteraciones....' % (i + 1)))
     saver.save(
         sess,
         rutaDeModelo + NOMBRE_MODELO,
@@ -494,8 +491,8 @@ if __name__ == "__main__":
     time_dif = end_time - comienzo_time
 
     # Imprimir tiempo
-    print('Tiempo usado en %d iteraciones: %s ' %
+    print(('Tiempo usado en %d iteraciones: %s ' %
           (ITERACIONES_ENTRENAMIENTO - ultima_iteracion,
-           str(timedelta(seconds=int(round(time_dif))))))
+           str(timedelta(seconds=int(round(time_dif)))))))
 
     #"""
