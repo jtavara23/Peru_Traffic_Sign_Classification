@@ -34,16 +34,13 @@ test_file = '../signals_database/traffic-signs-data/testData.p'
 signnames = read_csv(
     "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
 
-train_normalized_file = '../signals_database/traffic-signs-data/trainNormalized.p'
 train_flipped_file = '../signals_database/traffic-signs-data/trainFlipped.p'
 train_extended_file = '../signals_database/traffic-signs-data/trainExtended8.p'
-train_processed = '../signals_database/traffic-signs-data/trainProcessed.p'  #ready for trainingProcess
-
+train_normalized_file = '../signals_database/traffic-signs-data/trainNormalized.p'  #just withh clahe
+train_processed = '../signals_database/traffic-signs-data/trainProcessed.p'  #unsorted and ready for trainingProcess
 test_normalized_file = '../signals_database/traffic-signs-data/testNormalized.p'  # just with clahe
-test_processed = '../signals_database/traffic-signs-data/testProcessed.p'  #not augmented
-test_sorted = '../signals_database/traffic-signs-data/testSorted.p'
-test_sorted_extended = '../signals_database/traffic-signs-data/testSorted_Extended.p'
-test_extended = '../signals_database/traffic-signs-data/testExtended.p'  #mixed
+test_processed = '../signals_database/traffic-signs-data/testProcessed.p'  #sorted and ready for testing [not augmented]
+test_extended = '../signals_database/traffic-signs-data/testSorted_Extended.p'  #extend the sorted one
 test_processed_extended = '../signals_database/traffic-signs-data/testExtendedProcessed.p'  #ready for testingProcess
 
 #======================================================================================================
@@ -66,31 +63,7 @@ cross_flippable = np.array([
     [39, 38],
 ])
 
-
 #======================================================================================================
-# Print iterations progress
-def print_progress(iteration, total):
-    """
-    Call in a loop to create terminal progress bar
-    
-    Parameters
-    ----------
-        
-    iteration : 
-                Current iteration (Int)
-    total     : 
-                Total iterations (Int)
-    """
-    str_format = "{0:.0f}"
-    percents = str_format.format(100 * (iteration / float(total)))
-    filled_length = int(round(100 * iteration / float(total)))
-    bar = '|' * filled_length + '-' * (100 - filled_length)
-
-    sys.stdout.write('\r |%s| %s%%' % (bar, percents)),
-
-    if iteration == total:
-        sys.stdout.write('\n')
-    sys.stdout.flush()
 
 
 def ordenar(X_data, y_data, class_counts):
@@ -110,6 +83,12 @@ def ordenar(X_data, y_data, class_counts):
         y_extended = np.append(y_extended, np.full((nuevo_cant), c, dtype=int))
 
     return X_extended, y_extended
+
+
+def mezclar(X, y):
+    print("Shuffle Activated!")
+    X, y = shuffle(X, y)
+    return X, y
 
 
 def readOriginal(train_file):
@@ -136,59 +115,9 @@ def save_data(file, path):
         pickle.dump(file, f, protocol=2)
 
 
-def mezclar(X, y):
-    print("Shuffle Activated!")
-    X, y = shuffle(X, y)
-    return X, y
-
-
-def applyClahe(X):
-    X_ = []
-    for k in trange(X.shape[0]):
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            X_rgb = exposure.equalize_adapthist(X[k], clip_limit=0.03)
-            X_.append(X_rgb)
-        #print_progress(k + 1, X.shape[0])
-    return (np.asarray(X_)).astype(np.float32)
-
-
-def normalizeData(X_data, y_data, class_counts, targetFile):
-    X_data = applyClahe(X_data)
-    plot_some_examples(X_data, y_data, 5)
-    new_data = {'features': X_data, 'labels': y_data}
-    save_data(new_data, targetFile)
-    print("Pickle saved.")
-
-
-#At the end of Augment Data
-def process_dataset(X, y):
-    """
-    Performs feature scaling, one-hot encoding of labels and shuffles the data if labels are provided.
-    Assumes original dataset is sorted by labels.
-    
-    Parameters
-    ----------
-    X                : ndarray
-                       Dataset array containing feature examples.
-    y                : ndarray, optional, defaults to `None`
-                       Dataset labels in index form.
-    Returns
-    -------
-    A tuple of X and y.    
-    """
-    print("Preprocessing dataset with {} examples:".format(X.shape[0]))
-    #Convert to grayscale, e.g. single channel Y
-    X = 0.299 * X[:, :, :, 0] + 0.587 * X[:, :, :, 1] + 0.114 * X[:, :, :, 2]
-    #Scale features to be in [0, 1]
-    X = (X / 255.).astype(np.float32)
-    # Convert to one-hot encoding. Convert back with `y = y.nonzero()[1]`
-    y_flatten = y
-    y = np.eye(NUM_CLASSES)[y]
-
-    # Add a single grayscale channel
-    X = X.reshape(X.shape + (1, ))
-    return X, y, y_flatten
+#----------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
 
 
 def flip_extend(X, y):
@@ -253,6 +182,37 @@ def flip_extend(X, y):
             np.full((X_extended.shape[0] - y_extended.shape[0]), c, dtype=int))
 
     return (X_extended, y_extended)
+
+
+def createFlip(X_train, y_train):
+    global NUM_TRAIN
+    global IMAGE_SHAPE
+    global NUM_CLASSES
+    global CLASS_TYPES
+
+    print("Start to flip images...")
+    X_train, y_train = flip_extend(X_train, y_train)
+    CLASS_TYPES, init_per_class, class_counts = np.unique(
+        y_train, return_index=True, return_counts=True)
+    NUM_TRAIN = X_train.shape[0]
+    IMAGE_SHAPE = X_train[0].shape
+    NUM_CLASSES = class_counts.shape[0]
+    print("Number of Flipped training examples =", NUM_TRAIN)
+    print("Image data shape =", IMAGE_SHAPE)
+    print("Number of classes =", NUM_CLASSES)
+    return X_train, y_train, class_counts
+
+
+def doFlip():
+    X_train, y_train, class_counts1 = readOriginal(train_file)
+    X_train, y_train, class_counts2 = createFlip(X_train, y_train)
+
+    plot_histograms(
+        'Class Distribution Original Training data vs New Flipped Training Data',
+        CLASS_TYPES, class_counts1, class_counts2, 'b',
+        'r')  # get flippedImg_63538.png
+    new_data = {'features': X_train, 'labels': y_train}
+    save_data(new_data, train_flipped_file)
 
 
 #----------------------------------------------------------------------------------------
@@ -434,25 +394,6 @@ def extend_balancing_classes(X, y, aug_intensity=0.5, counts=None):
     return ((X_extended * 255.).astype(np.uint8), y_extended)
 
 
-def createFlip(X_train, y_train):
-    global NUM_TRAIN
-    global IMAGE_SHAPE
-    global NUM_CLASSES
-    global CLASS_TYPES
-
-    print("Start to flip images...")
-    X_train, y_train = flip_extend(X_train, y_train)
-    CLASS_TYPES, init_per_class, class_counts = np.unique(
-        y_train, return_index=True, return_counts=True)
-    NUM_TRAIN = X_train.shape[0]
-    IMAGE_SHAPE = X_train[0].shape
-    NUM_CLASSES = class_counts.shape[0]
-    print("Number of Flipped training examples =", NUM_TRAIN)
-    print("Image data shape =", IMAGE_SHAPE)
-    print("Number of classes =", NUM_CLASSES)
-    return X_train, y_train, class_counts
-
-
 def createExtendedDS(X_train, y_train, class_counts, num_times,
                      augm_intensity):
     global NUM_TRAIN
@@ -474,6 +415,86 @@ def createExtendedDS(X_train, y_train, class_counts, num_times,
     print("Image data shape =", IMAGE_SHAPE)
     print("Number of classes =", NUM_CLASSES)
     return X_train, y_train, class_counts
+
+
+def doExtended():
+    X_train, y_train, class_counts1 = readOriginal(train_flipped_file)
+
+    X_train_extended, y_train_extended, class_counts2 = createExtendedDS(
+        X_train, y_train, class_counts1, 8, 0.75)
+
+    plot_histograms(
+        'Class Distribution  New Flipped Training Data vs New Extended Training Data',
+        CLASS_TYPES, class_counts1, class_counts2, 'b',
+        'r')  # get ExtendedImg_313672.png
+    new_data = {'features': X_train_extended, 'labels': y_train_extended}
+    save_data(new_data, train_extended_file)
+
+
+#----------------------------------------------------------------------------------------
+#-----------------------------------CLAHE TECHNIQUE--------------------------------------
+#----------------------------------------------------------------------------------------
+
+
+def applyClahe(X):
+    X_ = []
+    for k in trange(X.shape[0]):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            X_rgb = exposure.equalize_adapthist(X[k])  #, clip_limit=0.03
+            X_.append(X_rgb)
+        #print_progress(k + 1, X.shape[0])
+    return (np.asarray(X_)).astype(np.float32)
+
+
+def normalizeData(X_data, y_data, class_counts, targetFile):
+    X_data = applyClahe(X_data)
+    #plot_some_examples(X_data, y_data, 5, 3)
+    new_data = {'features': X_data, 'labels': y_data}
+    save_data(new_data, targetFile)
+    print("Pickle saved.")
+
+
+#----------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
+
+
+#At the end of Augment Data
+def process_dataset(inputFile, isTrainFile=True):
+    """
+    Performs feature scaling, one-hot encoding of labels and shuffles the data if labels are provided.
+    Assumes original dataset is sorted by labels.
+    
+    Parameters
+    ----------
+    X                : ndarray
+                       Dataset array containing feature examples.
+    y                : ndarray, optional, defaults to `None`
+                       Dataset labels in index form.
+    Returns
+    -------
+    A tuple of X and y.    
+    """
+    X, y, class_count = readOriginal(inputFile)
+    if not isTrainFile:
+        X, y = ordenar(X, y, class_count)
+
+    print("Preprocessing dataset with {} examples".format(X.shape[0]))
+    #Convert to grayscale, e.g. single channel Y
+    X = 0.299 * X[:, :, :, 0] + 0.587 * X[:, :, :, 1] + 0.114 * X[:, :, :, 2]
+    #Scale features to be in [0, 1]
+    X = (X / 255.).astype(np.float32)
+
+    # Add a single grayscale channel
+    X = X.reshape(X.shape + (1, ))
+
+    new_data = {'features': X, 'labels': y}
+
+    if isTrainFile:
+        save_data(new_data, train_processed)
+    else:
+        save_data(new_data, test_processed)
 
 
 #----------------------------------------------------------------------------------------
@@ -684,59 +705,8 @@ def showHistogram(file, title):
         class_counts1)  #Get initial39209.png and initialTest12630.png
 
 
-def doFlip():
-    X_train, y_train, class_counts1 = readOriginal(train_file)
-    X_train, y_train, class_counts2 = createFlip(X_train, y_train)
-
-    #plot_histograms('Class Distribution Original Training data vs New Flipped Training Data', CLASS_TYPES,class_counts1,class_counts2,'b','r')# get flippedImg_59698.png
-    new_data = {'features': X_train, 'labels': y_train}
-    save_data(new_data, train_flipped_file)
-
-
-def doExtended():
-    X_train, y_train, class_counts1 = readOriginal(train_flipped_file)
-
-    X_train_extended, y_train_extended, class_counts2 = createExtendedDS(
-        X_train, y_train, class_counts1, 8, 0.75)
-
-    #plot_histograms('Class Distribution  New Flipped Training Data vs New Extended Training Data', CLASS_TYPES, class_counts1, class_counts2,'b','r')# get ExtendedImg_313672.png
-    new_data = {'features': X_train_extended, 'labels': y_train_extended}
-    save_data(new_data, train_extended_file)
-
-
-def doScaling_Normalization():
-    X_train, y_train, class_counts1 = readOriginal(train_file)
-    imagenes_entrenam, clases_entrenam, clases_entrenam_flat = process_dataset(
-        X_train, y_train)
-
-    plot_some_examples(imagenes_entrenam, y_train, 5)
-    new_data = {'features': imagenes_entrenam, 'labels': clases_entrenam_flat}
-    save_data(new_data, train_processed)
-    #----------
-    X_test, y_test, class_counts2 = readOriginal(test_file)
-    X_test, y_test = mezclar(X_test, y_test)
-    imagenes_eval, clases_eval, clases_eval_flat = process_dataset(
-        X_test, y_test)
-
-    plot_histograms(
-        'Class Distribution between Test Data and New Training Data',
-        CLASS_TYPES, class_counts2, class_counts1, 'b', 'r')  #get finalVS.png
-
-    new_data = {'features': imagenes_eval, 'labels': clases_eval_flat}
-    save_data(new_data, test_processed)
-
-
-def sortTestFile():
-    X_test, y_test, class_counts1 = readOriginal(test_file)
-    #To generate Augment Data we need to sort the test files
-    X_sorted, y_sorted = ordenar(X_test, y_test, class_counts1)
-
-    new_data = {'features': X_sorted, 'labels': y_sorted}
-    save_data(new_data, test_sorted)
-
-
-def extendSortedTest():
-    X_sorted, y_sorted, class_counts1 = readOriginal(test_sorted)
+def extendTest():
+    X_sorted, y_sorted, class_counts1 = readOriginal(test_normalized_file)
     X_test_sorted_extended, y_test_sorted_extended, _ = createExtendedDS(
         X_sorted, y_sorted, class_counts1, 5, 0.75)
 
@@ -744,35 +714,7 @@ def extendSortedTest():
         'features': X_test_sorted_extended,
         'labels': y_test_sorted_extended
     }
-    save_data(new_data, test_sorted_extended)
-
-
-def shuffleExtendedSortedTestFile():
-    X_test_sorted_extended, y_test_sorted_extended, class_counts1 = readOriginal(
-        test_sorted_extended)
-    #plot_some_examples(X_test_sorted_extended, y_test_sorted_extended,3)
-    X_test_extended, y_test_extended = mezclar(X_test_sorted_extended,
-                                               y_test_sorted_extended)
-    new_data = {'features': X_test_extended, 'labels': y_test_extended}
     save_data(new_data, test_extended)
-
-
-def showProcessResult(file):
-    X, y, _ = readOriginal(file)
-    plot_some_examples(X, y, 3)
-    #img = X[10].reshape(32, 32)
-    #plt.axis('off')
-    #plt.imshow(img, cmap='binary')
-    #plt.show()
-
-
-def temporalTestNormalization():
-    X_test_extended, y_test_extended, class_counts1 = readOriginal(
-        test_extended)
-    imagenes_eval, clases_eval, clases_eval_flat = process_dataset(
-        X_test_extended, y_test_extended, True)
-    new_data = {'features': imagenes_eval, 'labels': clases_eval_flat}
-    save_data(new_data, test_processed_extended)
 
 
 def plotCmpnNewTestHistograms():
@@ -793,12 +735,6 @@ if __name__ == "__main__":
     #X_test, y_test, _ = readOriginal(test_file)
     #showHistogram(X_test,'Class Distribution on Test Data')
     #plot_some_examples(X_test, y_test,5)
-    #--------------------NORMALIZE DATA---------------------------------------------------------
-    #x, y, cc = readOriginal(train_file)
-    #normalizeData(x, y, cc, train_normalized_file)
-    #x, y, cc = readOriginal(test_file)
-    #100%|####################################################| 12630/12630 [06:43<00:00, 31.33it/s]
-    #normalizeData(x, y, cc, test_normalized_file)
 
     #-----------------------------------------------------------------------------
     # Prepare a dataset with flipped classes
@@ -808,23 +744,23 @@ if __name__ == "__main__":
     # Prepare a dataset with extended classes
     #doExtended()
 
-    #-----------------------------------------------------------------------------
-    #doScaling_Normalization() #For training and Testing dataset
-    #showProcessResult(train_processed)
+    #--------------------NORMALIZE DATA---------------------------------------------------------
+    #x, y, cc = readOriginal(train_extended_file)
+    #100%|####################################################| 39209/39209 [20:03<00:00, 32.33it/s]
+    #normalizeData(x, y, cc, train_normalized_file)
+    #x, y, cc = readOriginal(test_file)
+    #100%|####################################################| 12630/12630 [06:43<00:00, 31.33it/s]
+    #normalizeData(x, y, cc, test_normalized_file)
+
+    #-------------------------PROCESS FILES (grayscale and scale pixels 0 to 1)----------------------------------------------------
+    #process_dataset(train_extended_file)
+    #process_dataset(test_normalized_file, False)
+    
     #-----------------------------------------------------------------------------
 
     #-------JUST FOR CONFIRMATION ON THE TESTING PHASE-------------------------------
-    #sortTestFile()
-    #extendSortedTest()
+    #extendTest()
     #plotCmpnNewTestHistograms()
-
-    #-----------------------------------------------------------------------------
-
-    #shuffleExtendedSortedTestFile()
-
-    #-----------------------------------------------------------------------------
-    #only if [extendSortedTest] doesnt work, also update [doScaling_Normalization] for testing file : put flag to False
-    #temporalTestNormalization()
 
     #-----------------------------------------------------------------------------
     #showFlippledImages()
