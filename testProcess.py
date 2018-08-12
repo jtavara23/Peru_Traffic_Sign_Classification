@@ -25,7 +25,7 @@ def procesamiento(X, y, type):
     """
 	Preprocess image data, and convert labels into one-hot
 	Arguments:
-	    * X: Array of images
+	    * X: Array of images, should be 32,32,1 of shape and each pixel between [0,1]
 	    * y: Array of labels
 	Returns:
 	    * Preprocessed X, one-hot version of y
