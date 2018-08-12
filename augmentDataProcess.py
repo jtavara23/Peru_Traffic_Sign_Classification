@@ -34,17 +34,17 @@ test_file = '../signals_database/traffic-signs-data/testData.p'
 signnames = read_csv(
     "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
 
-train_normalized_file = '../signals_database/traffic-signs-data/trainNormalized.p'  #just with clahe and scale [0,1]
-train_flipped_file = '../signals_database/traffic-signs-data/trainFlipped.p'
-train_extended_file = '../signals_database/traffic-signs-data/trainExtended8.p'
-test_processed_file = '../signals_database/traffic-signs-data/trainProcessed.p'  #unsorted and ready for trainingProcess
+train_normalized_file = '../signals_database/traffic-signs-data/train_1Normalized.p'  #just with clahe and scale [0,1]
+train_flipped_file = '../signals_database/traffic-signs-data/train_2Flipped.p'
+train_extended_file = '../signals_database/traffic-signs-data/train_3Extended8.p'
+test_processed_file = '../signals_database/traffic-signs-data/train_4Processed.p'  #unsorted and ready for trainingProcess
 
-test_normalized_file = '../signals_database/traffic-signs-data/testNormalized.p'  # just with clahe and scale [0,1]
-test_processed_file = '../signals_database/traffic-signs-data/testProcessed.p'  #sorted and ready for testing [not augmented]
+test_normalized_file = '../signals_database/traffic-signs-data/test_1Normalized.p'  # just with clahe and scale [0,1]
+test_processed_file = '../signals_database/traffic-signs-data/test_2Processed.p'  #sorted and ready for testing [not augmented]
 
-test_flipped_file = '../signals_database/traffic-signs-data/testFlipped.p'  # from test_normalized_file
-test_extended_file = '../signals_database/traffic-signs-data/testSorted_Extended.p'  #extend the sorted one
-test_processed_extended_file = '../signals_database/traffic-signs-data/testExtendedProcessed.p'  #ready for testingProcess
+test_flipped_file = '../signals_database/traffic-signs-data/test_3Flipped.p'  # from test_normalized_file
+test_extended_file = '../signals_database/traffic-signs-data/test_4Sorted_Extended.p'  #extend the sorted one
+test_processed_extended_file = '../signals_database/traffic-signs-data/test_5ExtendedProcessed.p'  #ready for testingProcess
 
 #======================================================================================================
 # Classes of signs that, when flipped horizontally, should still be classified as the same class
@@ -273,7 +273,7 @@ class AugmentedSignsBatchIterator(BatchIterator):
             image_size = Xb.shape[1]
 
             Xb = self.rotate(Xb, batch_size)
-            #Xb = self.apply_projection_transform(Xb, batch_size, image_size)
+            #sXb = self.apply_projection_transform(Xb, batch_size, image_size)
 
         return Xb, yb
 
@@ -351,57 +351,62 @@ def extend_balancing_classes(X, y, aug_intensity=0.5, counts=None):
     -------
     A tuple of X and y.    
     """
-    class_numbers = NUM_CLASSES
 
     class_numbers, class_counts = np.unique(y, return_counts=True)
     max_c = max(class_counts)
-    dataLimiter = 0
 
     X_extended = np.empty(
         [0, X.shape[1], X.shape[2], X.shape[3]], dtype=np.float32)
     y_extended = np.empty([0], dtype=y.dtype)
+    dataLimiter = 0
 
     print("Extending dataset using augmented data (intensity = {}):".format(
         aug_intensity))
 
-    for i in trange(len(class_numbers)):
-        BATCH_SIZE = class_counts[i] - 1
+    #for i in trange(len(class_numbers)):
+    #    BATCH_SIZE = class_counts[i] - 1
 
-    for c, c_count in zip(range(class_numbers), class_counts):
-        if c == 4:
-            break
-        # How many examples should there be eventually for this class:
-        print("In the class ", c, " with ", c_count, " images")
+    for c, BATCH_SIZE in zip(range(len(class_numbers)), class_counts):
+        #if c == 4:
+        #    break
+        print("In the class ", c, " with ", BATCH_SIZE, " images")
+        X_source = X[dataLimiter:dataLimiter + BATCH_SIZE]
+        y_source = y[dataLimiter:dataLimiter + BATCH_SIZE]
         # First copy existing data for this class
-        #X_source = (X[y == c] / 255.).astype(np.float32)
-        #y_source = y[y == c]
-        X_source = X
-        y_source = y
         X_extended = np.append(X_extended, X_source, axis=0)
+        y_extended = np.append(y_extended, y_source, axis=0)
 
-        #print("Start 1st part, bacth size: ", X_source.shape[0], " | rango: ", (max_c // c_count) - 1)
-        for i in range((max_c // c_count) - 1):
+        augment_factor = (max_c // BATCH_SIZE) - 1
+        remainder = max_c % BATCH_SIZE
+        numb_new_imgs = 0
+        print("1st bacth size: ", BATCH_SIZE, ", times: ", augment_factor)
+        print("2nd bacth size: ", remainder)
+
+        for i in range(augment_factor):
             batch_iterator = AugmentedSignsBatchIterator(
-                batch_size=X_source.shape[0], p=1.0, intensity=aug_intensity)
-            for x_batch, _ in batch_iterator(X_source, y_source):
-                X_extended = np.append(X_extended, x_batch, axis=0)
-                #print_progress(X_extended.shape[0], total)
-            #print(X_extended.shape[0])
+                batch_size=(BATCH_SIZE), p=1.0, intensity=aug_intensity)
+            for x_aug, y_aug in batch_iterator(X_source, y_source):
+                numb_new_imgs += x_aug.shape[0]
+                X_extended = np.append(X_extended, x_aug, axis=0)
+                y_extended = np.append(y_extended, y_aug, axis=0)
 
-        #print("Start 2nd part,bacth size: ", max_c % c_count)
         batch_iterator = AugmentedSignsBatchIterator(
-            batch_size=max_c % c_count, p=1.0, intensity=aug_intensity)
+            batch_size=(remainder), p=1.0, intensity=aug_intensity)
 
-        for x_batch, _ in batch_iterator(X_source, y_source):
-            X_extended = np.append(X_extended, x_batch, axis=0)
-            #print_progress(X_extended.shape[0], total)
-            #break
-        # Fill labels for added images set to current class.
-        print(X_extended.shape[0])
-        nuevo_cant = X_extended.shape[0] - y_extended.shape[0]
-        y_extended = np.append(y_extended, np.full((nuevo_cant), c, dtype=int))
+        for x_aug, y_aug in batch_iterator(
+                X[dataLimiter:dataLimiter + remainder],
+                y[dataLimiter:dataLimiter + remainder]):
 
-    return ((X_extended * 255.).astype(np.uint8), y_extended)
+            numb_new_imgs += x_aug.shape[0]
+            X_extended = np.append(X_extended, x_aug, axis=0)
+            y_extended = np.append(y_extended, y_aug, axis=0)
+
+        print(numb_new_imgs, " were added. Total => ",
+              y_source.shape[0] + numb_new_imgs)
+        print("---------------------------------------------------")
+        dataLimiter += BATCH_SIZE
+
+    return (X_extended, y_extended)
 
 
 def createExtendedDS(X_data, y_data, class_counts, numPerClass,
@@ -510,10 +515,7 @@ def convertToGrayScale(inputFile, outputFile, isTrainFile=True):
 
     new_data = {'features': X, 'labels': y}
 
-    if isTrainFile:
-        save_data(new_data, outputFile)
-    else:
-        save_data(new_data, outputFile)
+    save_data(new_data, outputFile)
 
 
 #----------------------------------------------------------------------------------------
@@ -604,7 +606,7 @@ def showAugmentSamples(file):
     #X_input, y_output = mezclar(X_input, y_output)
     #X_input, y_output = ordenar(X_input, y_output, cc)
     cant_conv = 5
-    cant_orig_imgs = 3  #number of images TAKEN AS BASED
+    cant_orig_imgs = 6  #number of images TAKEN AS BASED
     ind = range(0, cant_orig_imgs)
     print(signnames[ind])
     fig = plt.figure(figsize=(cant_orig_imgs, cant_conv + 1))
@@ -759,16 +761,19 @@ if __name__ == "__main__":
     #-----------------------------------------------------------------------------
 
     #-------JUST FOR CONFIRMATION ON THE TESTING PHASE-------------------------------
-    #doFlip(test_normalized_file, test_flipped_file)
-    #doExtended(test_normalized_file, numPerClass=5, isTraining=False)
-    #X, y = ordenar(x, y, cc)
-    #plot_some_examples(X, y, 5)
 
-    #convertToGrayScale(test_extended_file,test_processed_extended_file. False)
+    #doFlip(test_normalized_file, test_flipped_file)
+    #doExtended(test_flipped_file, numPerClass=5, isTraining=False)
+    x, y, cc = readOriginal(test_extended_file)
+    showHistogram(test_extended_file, "extended test file")
+    plot_some_examples(x, y, 5)
+
+    convertToGrayScale(test_extended_file, test_processed_extended_file)
 
     #plotCmpnNewTestHistograms()
     #-----------------------------------------------------------------------------
     #showFlippledImages()
     #-----------------------------------------------------------------------------
-    #showAugmentSamples(test_file)
+    #showHistogram(test_flipped_file, "test flipped")
+    #showAugmentSamples(test_flipped_file)
     #-----------------------------------------------------------------------------
