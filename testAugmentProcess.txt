@@ -1,0 +1,229 @@
+(tensor35) D:\signalsWindows>python augmentDataProcess.py
+WARNING (theano.configdefaults): install mkl with `conda install mkl-service`: No module named 'mkl'
+WARNING (theano.tensor.blas): Using NumPy C-API based implementation for BLAS functions.
+C:\Users\User\Anaconda2\envs\tensor35\lib\site-packages\sklearn\cross_validation.py:41: DeprecationWarning: This module was deprecated in version 0.18 in favor of the model_selection module into which all the refactored classes and functions are moved. Also note that the interface of the new CV iterators are different from that of this module. This module will be removed in 0.20.
+  "This module will be removed in 0.20.", DeprecationWarning)
+Finish importing packages
+Number of INITIAL training examples = 20460
+Image data shape = (32, 32, 3)
+Number of classes = 43
+Extending dataset using augmented data (intensity = 0.75):
+In the class  0  with  60  images
+1st bacth size:  60 , times:  33
+2nd bacth size:  30
+2010  were added. Total =>  2070
+---------------------------------------------------
+In the class  1  with  1440  images
+1st bacth size:  1440 , times:  0
+2nd bacth size:  630
+630  were added. Total =>  2070
+---------------------------------------------------
+In the class  2  with  750  images
+1st bacth size:  750 , times:  1
+2nd bacth size:  570
+1320  were added. Total =>  2070
+---------------------------------------------------
+In the class  3  with  450  images
+1st bacth size:  450 , times:  3
+2nd bacth size:  270
+1620  were added. Total =>  2070
+---------------------------------------------------
+In the class  4  with  660  images
+1st bacth size:  660 , times:  2
+2nd bacth size:  90
+1410  were added. Total =>  2070
+---------------------------------------------------
+In the class  5  with  1260  images
+1st bacth size:  1260 , times:  0
+2nd bacth size:  810
+810  were added. Total =>  2070
+---------------------------------------------------
+In the class  6  with  150  images
+1st bacth size:  150 , times:  12
+2nd bacth size:  120
+1920  were added. Total =>  2070
+---------------------------------------------------
+In the class  7  with  450  images
+1st bacth size:  450 , times:  3
+2nd bacth size:  270
+1620  were added. Total =>  2070
+---------------------------------------------------
+In the class  8  with  450  images
+1st bacth size:  450 , times:  3
+2nd bacth size:  270
+1620  were added. Total =>  2070
+---------------------------------------------------
+In the class  9  with  480  images
+1st bacth size:  480 , times:  3
+2nd bacth size:  150
+1590  were added. Total =>  2070
+---------------------------------------------------
+In the class  10  with  660  images
+1st bacth size:  660 , times:  2
+2nd bacth size:  90
+1410  were added. Total =>  2070
+---------------------------------------------------
+In the class  11  with  840  images
+1st bacth size:  840 , times:  1
+2nd bacth size:  390
+1230  were added. Total =>  2070
+---------------------------------------------------
+In the class  12  with  2070  images
+1st bacth size:  2070 , times:  0
+2nd bacth size:  0
+0  were added. Total =>  2070
+---------------------------------------------------
+In the class  13  with  1440  images
+1st bacth size:  1440 , times:  0
+2nd bacth size:  630
+630  were added. Total =>  2070
+---------------------------------------------------
+In the class  14  with  270  images
+1st bacth size:  270 , times:  6
+2nd bacth size:  180
+1800  were added. Total =>  2070
+---------------------------------------------------
+In the class  15  with  630  images
+1st bacth size:  630 , times:  2
+2nd bacth size:  180
+1440  were added. Total =>  2070
+---------------------------------------------------
+In the class  16  with  150  images
+1st bacth size:  150 , times:  12
+2nd bacth size:  120
+1920  were added. Total =>  2070
+---------------------------------------------------
+In the class  17  with  1080  images
+1st bacth size:  1080 , times:  0
+2nd bacth size:  990
+990  were added. Total =>  2070
+---------------------------------------------------
+In the class  18  with  780  images
+1st bacth size:  780 , times:  1
+2nd bacth size:  510
+1290  were added. Total =>  2070
+---------------------------------------------------
+In the class  19  with  150  images
+1st bacth size:  150 , times:  12
+2nd bacth size:  120
+1920  were added. Total =>  2070
+---------------------------------------------------
+In the class  20  with  150  images
+1st bacth size:  150 , times:  12
+2nd bacth size:  120
+1920  were added. Total =>  2070
+---------------------------------------------------
+In the class  21  with  90  images
+1st bacth size:  90 , times:  22
+2nd bacth size:  0
+1980  were added. Total =>  2070
+---------------------------------------------------
+In the class  22  with  240  images
+1st bacth size:  240 , times:  7
+2nd bacth size:  150
+1830  were added. Total =>  2070
+---------------------------------------------------
+In the class  23  with  150  images
+1st bacth size:  150 , times:  12
+2nd bacth size:  120
+1920  were added. Total =>  2070
+---------------------------------------------------
+In the class  24  with  90  images
+1st bacth size:  90 , times:  22
+2nd bacth size:  0
+1980  were added. Total =>  2070
+---------------------------------------------------
+In the class  25  with  480  images
+1st bacth size:  480 , times:  3
+2nd bacth size:  150
+1590  were added. Total =>  2070
+---------------------------------------------------
+In the class  26  with  360  images
+1st bacth size:  360 , times:  4
+2nd bacth size:  270
+1710  were added. Total =>  2070
+---------------------------------------------------
+In the class  27  with  60  images
+1st bacth size:  60 , times:  33
+2nd bacth size:  30
+2010  were added. Total =>  2070
+---------------------------------------------------
+In the class  28  with  150  images
+1st bacth size:  150 , times:  12
+2nd bacth size:  120
+1920  were added. Total =>  2070
+---------------------------------------------------
+In the class  29  with  90  images
+1st bacth size:  90 , times:  22
+2nd bacth size:  0
+1980  were added. Total =>  2070
+---------------------------------------------------
+In the class  30  with  300  images
+1st bacth size:  300 , times:  5
+2nd bacth size:  270
+1770  were added. Total =>  2070
+---------------------------------------------------
+In the class  31  with  270  images
+1st bacth size:  270 , times:  6
+2nd bacth size:  180
+1800  were added. Total =>  2070
+---------------------------------------------------
+In the class  32  with  120  images
+1st bacth size:  120 , times:  16
+2nd bacth size:  30
+1950  were added. Total =>  2070
+---------------------------------------------------
+In the class  33  with  330  images
+1st bacth size:  330 , times:  5
+2nd bacth size:  90
+1740  were added. Total =>  2070
+---------------------------------------------------
+In the class  34  with  330  images
+1st bacth size:  330 , times:  5
+2nd bacth size:  90
+1740  were added. Total =>  2070
+---------------------------------------------------
+In the class  35  with  780  images
+1st bacth size:  780 , times:  1
+2nd bacth size:  510
+1290  were added. Total =>  2070
+---------------------------------------------------
+In the class  36  with  180  images
+1st bacth size:  180 , times:  10
+2nd bacth size:  90
+1890  were added. Total =>  2070
+---------------------------------------------------
+In the class  37  with  180  images
+1st bacth size:  180 , times:  10
+2nd bacth size:  90
+1890  were added. Total =>  2070
+---------------------------------------------------
+In the class  38  with  780  images
+1st bacth size:  780 , times:  1
+2nd bacth size:  510
+1290  were added. Total =>  2070
+---------------------------------------------------
+In the class  39  with  780  images
+1st bacth size:  780 , times:  1
+2nd bacth size:  510
+1290  were added. Total =>  2070
+---------------------------------------------------
+In the class  40  with  180  images
+1st bacth size:  180 , times:  10
+2nd bacth size:  90
+1890  were added. Total =>  2070
+---------------------------------------------------
+In the class  41  with  60  images
+1st bacth size:  60 , times:  33
+2nd bacth size:  30
+2010  were added. Total =>  2070
+---------------------------------------------------
+In the class  42  with  90  images
+1st bacth size:  90 , times:  22
+2nd bacth size:  0
+1980  were added. Total =>  2070
+---------------------------------------------------
+Number of augmenting and extending training data = 89010
+Image data shape = (32, 32, 3)
+Number of classes = 43
+Pickle saved
