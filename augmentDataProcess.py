@@ -274,16 +274,16 @@ class AugmentedSignsBatchIterator(BatchIterator):
             batch_size = Xb.shape[0]
             image_size = Xb.shape[1]
             #Xb = self.zoom(Xb, batch_size)
-            print("\n\nimage: ",yb)
-            if(random.choice([True,False])):
+            #print("\n\nimage: ",yb)
+            if (random.choice([True, False])):
                 Xb = self.histeq(Xb, batch_size)
-            if(random.choice([True,False])):
+            if (random.choice([True, False])):
                 Xb = self.rotate(Xb, batch_size)
-            if(random.choice([True,False])):
+            if (random.choice([True, False])):
                 Xb = self.zoom(Xb, batch_size)
             else:
                 Xb = self.projection_transform(Xb, batch_size, image_size)
-            
+
         return Xb, yb
 
     ################# image zoom function##############
@@ -523,7 +523,7 @@ def normalizeData(X_data, y_data, class_counts, targetFile):
     X_data = applyClahe(X_data)
     #plot_some_examples(X_data, y_data, 5, 3)
     new_data = {'features': X_data, 'labels': y_data}
-    #save_data(new_data, targetFile)
+    save_data(new_data, targetFile)
     print("Pickle saved.")
 
 
@@ -652,6 +652,7 @@ def showAugmentSamples(file):
     X_input, y_output, cc = readOriginal(file)
     #X_input, y_output = ordenar(X_input, y_output, cc)
     X_input = (X_input / 255)
+
     cant_conv = 5
     cant_orig_imgs = 6  #number of images TAKEN AS BASED
     #ind = range(0, cant_orig_imgs)
@@ -801,8 +802,10 @@ if __name__ == "__main__":
     #showHistogram(train_flipped_file,"Class Distribution Original Training Data vs New Flipped Traininig Data")
     #-----------------------------------------------------------------------------
     # Prepare a dataset with extended classes
-    #doExtended(train_flipped_file, balanced=False)
-    #doExtended(train_flipped_file, balanced=True) # BE CAREFUL! WITH OVERWRITTEN THE FILE
+    doExtended(train_flipped_file, balanced=False)
+    doExtended(
+        train_flipped_file,
+        balanced=True)  # BE CAREFUL! WITH OVERWRITTEN THE FILE
 
     #-------------------------PROCESS FILES------------------------------------------
     #convertToGrayScale(train_normalized_file,test_processed_file )
@@ -825,5 +828,5 @@ if __name__ == "__main__":
     #-----------------------------------------------------------------------------
     #showHistogram(test_flipped_file, "test flipped")
     #showAugmentSamples(test_flipped_file)
-    showAugmentSamples(train_file)
+    #showAugmentSamples(train_file)
     #-----------------------------------------------------------------------------
