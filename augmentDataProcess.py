@@ -1,7 +1,7 @@
 import numpy as np
 import pickle
-from pandas.io.parsers import read_csv
 import matplotlib.pyplot as plt
+from pandas.io.parsers import read_csv
 from funcionesAuxiliares import readData, display
 
 # pip install nolearn , conda install libpython , pip install --upgrade https://github.com/Lasagne/Lasagne/archive/master.zip
@@ -10,10 +10,12 @@ from nolearn.lasagne import BatchIterator
 from skimage.transform import rotate
 from skimage.transform import warp
 from skimage.transform import ProjectiveTransform
+from skimage.transform import AffineTransform
+from skimage import filters
+from skimage import exposure
 import random
 
 from sklearn.utils import shuffle
-from skimage import exposure
 import warnings
 import sys
 #pip install tqdm
@@ -271,12 +273,54 @@ class AugmentedSignsBatchIterator(BatchIterator):
         if yb is not None:
             batch_size = Xb.shape[0]
             image_size = Xb.shape[1]
-
-            Xb = self.rotate(Xb, batch_size)
-            #sXb = self.apply_projection_transform(Xb, batch_size, image_size)
-
+            #Xb = self.zoom(Xb, batch_size)
+            print("\n\nimage: ",yb)
+            if(random.choice([True,False])):
+                Xb = self.histeq(Xb, batch_size)
+            if(random.choice([True,False])):
+                Xb = self.rotate(Xb, batch_size)
+            if(random.choice([True,False])):
+                Xb = self.zoom(Xb, batch_size)
+            else:
+                Xb = self.projection_transform(Xb, batch_size, image_size)
+            
         return Xb, yb
 
+    ################# image zoom function##############
+    def zoom(self, Xb, batch_size):
+        image_size = Xb.shape[1]
+        indices_zoom = np.random.choice(
+            batch_size, int(batch_size * self.p * 0.5), replace=False)
+        for k in indices_zoom:
+            zoom_fac = self.intensity / (2)
+            zoom_x = random.uniform(1 - zoom_fac, 1 + zoom_fac)
+            zoom_y = random.uniform(1 - zoom_fac, 1 + zoom_fac)
+
+            transform = AffineTransform(scale=(zoom_x, zoom_y))
+            Xb[k] = (warp(
+                Xb[k],
+                transform,
+                output_shape=(image_size, image_size),
+                order=1,
+                mode='edge'))
+        return Xb
+
+    ################# Histogram Equalization ######################
+    def histeq(self, Xb, batch_size):
+        # Apply histogram equalization on one quarter of the images
+        indices_histeq = np.random.choice(
+            batch_size, int(batch_size * self.p), replace=False)
+
+        for k in indices_histeq:
+            X_rgb = Xb[k]
+            X_rgb[:, :, 0] = exposure.equalize_hist(X_rgb[:, :, 0])
+            X_rgb[:, :, 1] = exposure.equalize_hist(X_rgb[:, :, 1])
+            X_rgb[:, :, 2] = exposure.equalize_hist(X_rgb[:, :, 2])
+            Xb[k] = X_rgb
+
+        return Xb
+
+    ########### Image Rotate Function ################
     def rotate(self, Xb, batch_size):
         """
         Applies random rotation in a defined degrees range to a random subset of images. 
@@ -288,7 +332,8 @@ class AugmentedSignsBatchIterator(BatchIterator):
             Xb[i] = rotate(Xb[i], random.uniform(-delta, delta), mode='edge')
         return Xb
 
-    def apply_projection_transform(self, Xb, batch_size, image_size):
+    #######For Affine , Shear, Scale and Rotation, Projective Transform ################
+    def projection_transform(self, Xb, batch_size, image_size):
         """
         Applies projection transform to a random subset of images. Projection margins are randomised in a range
         depending on the size of the image. Range itself is subject to scaling depending on augmentation intensity.
@@ -330,8 +375,7 @@ class AugmentedSignsBatchIterator(BatchIterator):
         return Xb
 
 
-def extend_balancing_classes(X, y, aug_intensity=0.5, counts=None):
-    global NUM_CLASSES
+def extend_balancing_classes(X, y, aug_intensity=0.5, isBalanced=False):
     """
     Extends dataset by duplicating existing images while applying data augmentation pipeline.
     Number of generated examples for each class may be provided in `counts`.
@@ -344,8 +388,8 @@ def extend_balancing_classes(X, y, aug_intensity=0.5, counts=None):
                     Dataset labels in index form.
     aug_intensity :
                     Intensity of augmentation, must be in [0, 1] range.
-    counts        :
-                    Number of elements for each class.
+    isBalanced        :
+                    to know what would be the augment data factor
                     
     Returns
     -------
@@ -376,8 +420,13 @@ def extend_balancing_classes(X, y, aug_intensity=0.5, counts=None):
         X_extended = np.append(X_extended, X_source, axis=0)
         y_extended = np.append(y_extended, y_source, axis=0)
 
-        augment_factor = (max_c // BATCH_SIZE) - 1
-        remainder = max_c % BATCH_SIZE
+        if not isBalanced:
+            augment_factor = (max_c // BATCH_SIZE) - 1
+            remainder = max_c % BATCH_SIZE
+        else:
+            augment_factor = 4
+            remainder = 0
+
         numb_new_imgs = 0
         print("1st bacth size: ", BATCH_SIZE, ", times: ", augment_factor)
         print("2nd bacth size: ", remainder)
@@ -390,16 +439,16 @@ def extend_balancing_classes(X, y, aug_intensity=0.5, counts=None):
                 X_extended = np.append(X_extended, x_aug, axis=0)
                 y_extended = np.append(y_extended, y_aug, axis=0)
 
-        batch_iterator = AugmentedSignsBatchIterator(
-            batch_size=(remainder), p=1.0, intensity=aug_intensity)
+        if not isBalanced:
+            batch_iterator = AugmentedSignsBatchIterator(
+                batch_size=(remainder), p=1.0, intensity=aug_intensity)
 
-        for x_aug, y_aug in batch_iterator(
-                X[dataLimiter:dataLimiter + remainder],
-                y[dataLimiter:dataLimiter + remainder]):
-
-            numb_new_imgs += x_aug.shape[0]
-            X_extended = np.append(X_extended, x_aug, axis=0)
-            y_extended = np.append(y_extended, y_aug, axis=0)
+            for x_aug, y_aug in batch_iterator(
+                    X[dataLimiter:dataLimiter + remainder],
+                    y[dataLimiter:dataLimiter + remainder]):
+                numb_new_imgs += x_aug.shape[0]
+                X_extended = np.append(X_extended, x_aug, axis=0)
+                y_extended = np.append(y_extended, y_aug, axis=0)
 
         print(numb_new_imgs, " were added. Total => ",
               y_source.shape[0] + numb_new_imgs)
@@ -409,20 +458,18 @@ def extend_balancing_classes(X, y, aug_intensity=0.5, counts=None):
     return (X_extended, y_extended)
 
 
-def createExtendedDS(X_data, y_data, class_counts, numPerClass,
-                     augm_intensity):
+def createExtendedDS(X_data, y_data, class_counts, Balanced, augm_intensity):
     global NUM_TRAIN
     global IMAGE_SHAPE
     global NUM_CLASSES
     global CLASS_TYPES
 
     X_data, y_data = extend_balancing_classes(
-        X_data,
-        y_data,
-        aug_intensity=augm_intensity,
-        counts=class_counts * numPerClass)
+        X_data, y_data, aug_intensity=augm_intensity, isBalanced=Balanced)
+
     CLASS_TYPES, init_per_class, class_counts = np.unique(
         y_data, return_index=True, return_counts=True)
+
     NUM_TRAIN = X_data.shape[0]
     IMAGE_SHAPE = X_data[0].shape
     NUM_CLASSES = class_counts.shape[0]
@@ -432,7 +479,7 @@ def createExtendedDS(X_data, y_data, class_counts, numPerClass,
     return X_data, y_data, class_counts
 
 
-def doExtended(inputFile, numPerClass, isTraining=True):
+def doExtended(inputFile, balanced, isTraining=True):
     X_data, y_data, class_counts1 = readOriginal(inputFile)
 
     if not isTraining:
@@ -441,7 +488,7 @@ def doExtended(inputFile, numPerClass, isTraining=True):
         X_data = X_data[sorter]
     #"""
     X_data_extended, y_data_extended, class_counts2 = createExtendedDS(
-        X_data, y_data, class_counts1, numPerClass, 0.75)
+        X_data, y_data, class_counts1, balanced, 0.75)
 
     new_data = {'features': X_data_extended, 'labels': y_data_extended}
     if isTraining:
@@ -601,14 +648,15 @@ def showFlippledImages():
 
 
 def showAugmentSamples(file):
-    #WORKS WITH SCALE IMAGES()
+    #WORKS WITH SCALE IMAGES(pixels between 0 & 1)
     X_input, y_output, cc = readOriginal(file)
-    #X_input, y_output = mezclar(X_input, y_output)
     #X_input, y_output = ordenar(X_input, y_output, cc)
+    X_input = (X_input / 255)
     cant_conv = 5
     cant_orig_imgs = 6  #number of images TAKEN AS BASED
-    ind = range(0, cant_orig_imgs)
-    print(signnames[ind])
+    #ind = range(0, cant_orig_imgs)
+    ind = random.sample(range(0, NUM_TRAIN), cant_orig_imgs)
+    #print(signnames[ind])
     fig = plt.figure(figsize=(cant_orig_imgs, cant_conv + 1))
     fig.subplots_adjust(hspace=0.1, wspace=0.2)
     #plot imgs in a vertical way
@@ -742,7 +790,7 @@ if __name__ == "__main__":
     #--------------------NORMALIZE DATA---------------------------------------------------------
     #x, y, cc = readOriginal(train_file)
     #normalizeData(x, y, cc, train_normalized_file)
-    #100%|####################################################| 39209/39209 [30:12<00:00, 32.33it/s]
+    #100%|################################################################| 39209/39209 [26:58<00:00, 24.23it/s]
     #x, y, cc = readOriginal(test_file)
     #normalizeData(x, y, cc, test_normalized_file)
     #100%|####################################################| 12630/12630 [08:04<00:00, 26.05it/s]
@@ -753,7 +801,8 @@ if __name__ == "__main__":
     #showHistogram(train_flipped_file,"Class Distribution Original Training Data vs New Flipped Traininig Data")
     #-----------------------------------------------------------------------------
     # Prepare a dataset with extended classes
-    #doExtended(True,train_flipped_file,8)
+    #doExtended(train_flipped_file, balanced=False)
+    #doExtended(train_flipped_file, balanced=True) # BE CAREFUL! WITH OVERWRITTEN THE FILE
 
     #-------------------------PROCESS FILES------------------------------------------
     #convertToGrayScale(train_normalized_file,test_processed_file )
@@ -776,4 +825,5 @@ if __name__ == "__main__":
     #-----------------------------------------------------------------------------
     #showHistogram(test_flipped_file, "test flipped")
     #showAugmentSamples(test_flipped_file)
+    showAugmentSamples(train_file)
     #-----------------------------------------------------------------------------
