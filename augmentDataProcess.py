@@ -39,7 +39,7 @@ signnames = read_csv(
 train_normalized_file = '../signals_database/traffic-signs-data/train_1Normalized.p'  #just with clahe and scale [0,1]
 train_flipped_file = '../signals_database/traffic-signs-data/train_2Flipped.p'
 train_extended_file = '../signals_database/traffic-signs-data/train_3Extended8.p'
-test_processed_file = '../signals_database/traffic-signs-data/train_4Processed.p'  #unsorted and ready for trainingProcess
+train_processed_file = '../signals_database/traffic-signs-data/train_4Processed.p'  #unsorted and ready for trainingProcess
 
 test_normalized_file = '../signals_database/traffic-signs-data/test_1Normalized.p'  # just with clahe and scale [0,1]
 test_processed_file = '../signals_database/traffic-signs-data/test_2Processed.p'  #sorted and ready for testing [not augmented]
@@ -533,7 +533,7 @@ def normalizeData(X_data, y_data, class_counts, targetFile):
 
 
 #At the end of Augment Data
-def convertToGrayScale(inputFile, outputFile, isTrainFile=True):
+def convertToGrayScale(inputFile, outputFile):
     """
     Performs feature scaling, one-hot encoding of labels and shuffles the data if labels are provided.
     Assumes original dataset is sorted by labels.
@@ -798,24 +798,24 @@ if __name__ == "__main__":
 
     #-----------------------------------------------------------------------------
     # Prepare a dataset with flipped classes
-    #doFlip(train_normalized_file, train_flipped_file)
+    doFlip(train_normalized_file, train_flipped_file)
     #showHistogram(train_flipped_file,"Class Distribution Original Training Data vs New Flipped Traininig Data")
     #-----------------------------------------------------------------------------
     # Prepare a dataset with extended classes
-    doExtended(train_flipped_file, balanced=False)
-    doExtended(
-        train_flipped_file,
-        balanced=True)  # BE CAREFUL! WITH OVERWRITTEN THE FILE
+    #doExtended(train_flipped_file, balanced=False)
+    #doExtended(
+    #    train_flipped_file,
+    #    balanced=True)  # BE CAREFUL! WITH OVERWRITTEN THE FILE
 
     #-------------------------PROCESS FILES------------------------------------------
-    #convertToGrayScale(train_normalized_file,test_processed_file )
-    #convertToGrayScale(test_normalized_file,test_processed_file, False)
+    #convertToGrayScale(train_normalized_file,train_processed_file)
+    #convertToGrayScale(test_normalized_file,test_processed_file)
     #-----------------------------------------------------------------------------
 
     #-------JUST FOR CONFIRMATION ON THE TESTING PHASE-------------------------------
 
     #doFlip(test_normalized_file, test_flipped_file)
-    #doExtended(test_flipped_file, numPerClass=5, isTraining=False)
+    #doExtended(test_flipped_file, balanced=False, isTraining=False)
     #x, y, cc = readOriginal(test_extended_file)
     #showHistogram(test_extended_file, "extended test file")
     #plot_some_examples(x, y, 5)
