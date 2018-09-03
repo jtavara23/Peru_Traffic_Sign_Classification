@@ -24,13 +24,6 @@ pastfilePath = ""
 clean = False
 
 
-
-def open_image_gnome(picture, distance):
-    image_rota = databaseOfImages
-    image_rota = image_rota + picture.strip() + ".jpg"
-    os.system('gnome-open ' + image_rota)
-
-
 def on_closing():
     if messagebox.askokcancel("Salir", "Desea salir?"):
         root.destroy()
@@ -95,7 +88,7 @@ def goQuery():
 
     print("Ejecutando modelo convolucional")
     signalRecognized = anaSig.runAnalyzer(filePath)
-    showImgProc() #should be at the end? need to be tested in Windows
+    showImgProc()  #should be at the end? need to be tested in Windows
     if (clean):
         res.place(y=-80)
     else:
