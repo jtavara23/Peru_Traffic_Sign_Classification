@@ -95,7 +95,7 @@ def goQuery():
 
     print("Ejecutando modelo convolucional")
     signalRecognized = anaSig.runAnalyzer(filePath)
-    showImgProc()
+    showImgProc() #should be at the end? need to be tested in Windows
     if (clean):
         res.place(y=-80)
     else:
