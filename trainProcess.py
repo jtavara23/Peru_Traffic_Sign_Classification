@@ -20,37 +20,38 @@ from tqdm import trange
 import cv2
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 #np.set_printoptions(threshold=np.nan)
-
+from sklearn.model_selection import train_test_split
 NOMBRE_MODELO = 'model'
 NOMBRE_TENSOR_ENTRADA = 'inputX'
 NOMBRE_PROBABILIDAD = 'mantener_probabilidad'
 NOMBRE_TENSOR_SALIDA_CALCULADA = 'outputYCalculada'
 NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 
-#rutaDeModelo = '/media/josuetavara/Gaston/signals/models5/'
-rutaDeModelo = 'D:/signals/models5/'
+#rutaDeModelo = 'D:/signals/models5/'
+rutaDeModelo = 'models/'
 #tensorboard --logdir /media/josuetavara/Gaston/signals/models4
-
-TASA_APRENDIZAJE = 0.0001  #1e-3
-
-# entrenamiento es ejecutado seleccionando subconjuntos de imagenes
-BATCH_SIZE = 256
-#256*1226 iteraciones=313672 .. 1 epoca(36:30 min)
-
-ITERACIONES_ENTRENAMIENTO = 1226 * 6 + 1226 * 3 + 1226 * 6 + 1226 * 10 + 1226 * 5 + 1226 * 10 + 256
-
-CHKP_GUARDAR_MODELO = 500  #5*300#cada 300 iteraciones
-CHKP_REVISAR_PROGRESO = 32  #500#50#iteraciones
-#250==50 veces
-
 DROPOUT = 0.5
 
-#fileI = open("bef.txt", "w")
-#fileO = open("aft.txt", "w")
+TASA_APRENDIZAJE = 5e-4  # 1,2,3ra epoca
+#TASA_APRENDIZAJE = 3e-4  # 4ta,5ta epoca
+#TASA_APRENDIZAJE = 1e-4  # 6ta,7ma
+
+#--------------FOR BALANCED DATASET-----------------------
 NUM_CLASSES = 0  #43
-NUM_TRAIN = 0  #313672
-NUM_TEST = 0  #12630
+NUM_TRAIN = 0  #270900 *0.75 = 203175
+NUM_TEST = 0  #270900 *0.25 = 67725
 IMAGE_SHAPE = 0  #(32,32,1)
+
+BATCH_SIZE = 525
+ITER_PER_EPOCA = 378  # = (203175 / 525)
+
+#ITERACIONES_ENTRENAMIENTO: (ITER_PER_EPOCA * EPOCAS)
+ITERACIONES_ENTRENAMIENTO = ITER_PER_EPOCA * 2
+
+CHKP_GUARDAR_MODELO = 600
+CHKP_REVISAR_PROGRESO = 50
+
+#-----------------------------------------------------------
 
 
 def siguiente_batch_entren(batch_size, cant_imag_entrenamiento):
@@ -183,7 +184,7 @@ def create_cnn():
         'float',
         shape=[None, IMAGE_SHAPE[0], IMAGE_SHAPE[1], IMAGE_SHAPE[2]],
         name=NOMBRE_TENSOR_ENTRADA)
-    print( "Numero clases", NUM_CLASSES)
+    print("Numero clases", NUM_CLASSES)
     # clases
     y_deseada = tf.placeholder(
         'float', shape=[None, NUM_CLASSES], name=NOMBRE_TENSOR_SALIDA_DESEADA)
@@ -338,48 +339,48 @@ def create_cnn():
 
 if __name__ == "__main__":
 
-    train_file = '../signals_database/traffic-signs-data/trainProcessed.p'
-    test_file = '../signals_database/traffic-signs-data/testProcessed.p'
+    train_file = '../signals_database/traffic-signs-data/train_4ProcessedBalanced.p'
     signnames = read_csv(
         "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
 
-    print( "reading trianing dataset")
+    print("reading trianing dataset")
     X_train, y_train = readData(train_file)
-    print( "reading testing dataset")
-    X_test, y_test = readData(test_file)
+    X_train, X_validation, y_train, y_validation = train_test_split(
+        X_train, y_train, test_size=0.25)
 
-    #print( X_train[0]
+    #print( X_train[0])
     NUM_TRAIN = y_train.shape[0]
-    NUM_TEST = y_test.shape[0]
+    NUM_TEST = y_validation.shape[0]
     IMAGE_SHAPE = X_train[0].shape
     NUM_CLASSES = len(set(y_train))
 
-    print( "Number of training examples =", NUM_TRAIN)
-    print( "Number of testing examples =", NUM_TEST)
-    print( "Image data shape =", IMAGE_SHAPE)
-    print( "Number of classes =", NUM_CLASSES)
+    print("Number of training examples =", NUM_TRAIN)
+    print("Number of testing examples =", NUM_TEST)
+    print("Image data shape =", IMAGE_SHAPE)
+    print("Number of classes =", NUM_CLASSES)
 
     class_indices, examples_per_class, class_counts = np.unique(
         y_train, return_index=True, return_counts=True)
     class_indicesTest, examples_per_classTest, class_countsTest = np.unique(
-        y_test, return_index=True, return_counts=True)
+        y_validation, return_index=True, return_counts=True)
     #plot_histograms('Class Distribution across Training Data', class_indices, class_counts)
     #plot_histograms('Class Distribution across Testing Data', class_indicesTest, class_countsTest)
     #plt.show()
 
     imagenes_entrenam, clases_entrenam, clases_entrenam_flat = one_hot(
         X_train, y_train)
-    imagenes_eval, clases_eval, clases_eval_flat = one_hot(X_test, y_test)
+    imagenes_eval, clases_eval, clases_eval_flat = one_hot(
+        X_validation, y_validation)
 
     #cv2.imwrite('zexample1.png',X_train[200])
     #display(X_train[10])
     #print( X_train[10])
     #print( "**********************")
-    #print( X_test[0])
+    #print( X_validation[0])
 
     #--------------------------------CREACION DE LA RED------------------------------------------------
     #"""
-    print( "Inicio de creacion de la red")
+    print("Inicio de creacion de la red")
     tf.reset_default_graph()
     sess = tf.Session()
     resumen, entradas, y_deseada, is_training, iterac_entren, optimizador, acierto, predictor = create_cnn(
@@ -387,10 +388,10 @@ if __name__ == "__main__":
 
     sess.run(tf.global_variables_initializer())
 
-    entren_writer = tf.summary.FileWriter(rutaDeModelo + 'entrenamiento7',
+    entren_writer = tf.summary.FileWriter(rutaDeModelo + 'entrenamiento1',
                                           sess.graph)
     #entren_writer.add_graph(sess.graph)
-    evalua_writer = tf.summary.FileWriter(rutaDeModelo + 'evaluacion7',
+    evalua_writer = tf.summary.FileWriter(rutaDeModelo + 'evaluacion1',
                                           sess.graph)
     #numero = 1024
 
@@ -405,7 +406,7 @@ if __name__ == "__main__":
         print(("No se encontro puntos de control."))
 
     ultima_iteracion = iterac_entren.eval(sess)
-    print( "Ultimo modelo en la iteracion: ", ultima_iteracion)
+    print("Ultimo modelo en la iteracion: ", ultima_iteracion)
 
     epocas_completadas = 0
     indice_en_epoca = 0
@@ -433,8 +434,12 @@ if __name__ == "__main__":
 
         # Observar el progreso cada 'CHKP_REVISAR_PROGRESO' iteraciones
         if (i + 1) % CHKP_REVISAR_PROGRESO == 0:
-            print(('Tiempo usado en %d iteraciones: %s ' %(i + 1 - ultima_iteracion,
-                   str(timedelta(seconds=int(round(time.time() - comienzo_time)))))))
+            print(
+                ('Tiempo usado en %d iteraciones: %s ' %
+                 (i + 1 - ultima_iteracion,
+                  str(
+                      timedelta(
+                          seconds=int(round(time.time() - comienzo_time)))))))
             feed_dictx = {
                 entradas: batch_img_entrada,
                 y_deseada: batch_img_clase,
@@ -443,7 +448,7 @@ if __name__ == "__main__":
             [resu, aciertos_train] = sess.run(
                 [resumen, acierto], feed_dict=feed_dictx)
             print(('En la iteracion %d , Acierto de Entrenamiento => %.4f ' %
-                  (i + 1, aciertos_train)))
+                   (i + 1, aciertos_train)))
 
             feed_dictx = {
                 entradas: imagenes_eval[:2000],
@@ -454,7 +459,7 @@ if __name__ == "__main__":
                 [resumen, acierto], feed_dict=feed_dictx)
             evalua_writer.add_summary(resu, i)
             print(('En la iteracion %d , Acierto de Evaluacion => %.4f \n' %
-                  (i + 1, aciertos_eval)))
+                   (i + 1, aciertos_eval)))
 
         #Crear 'punto de control' cuando se llego a las CHKP_GUARDAR_MODELO iteraciones
         if (i + 1) % CHKP_GUARDAR_MODELO == 0:
@@ -472,7 +477,7 @@ if __name__ == "__main__":
     }
     [resu, aciertos_train] = sess.run([resumen, acierto], feed_dict=feed_dictx)
     print(('En la iteracion %d , Acierto de Entrenamiento => %.4f ' %
-          (i + 1, aciertos_train)))
+           (i + 1, aciertos_train)))
     feed_dictx = {
         entradas: imagenes_eval[:2000],
         y_deseada: clases_eval[:2000],
@@ -481,7 +486,7 @@ if __name__ == "__main__":
     [resu, aciertos_eval] = sess.run([resumen, acierto], feed_dict=feed_dictx)
     evalua_writer.add_summary(resu, i)
     print(('En la iteracion %d , Acierto de Evaluacion => %.4f \n' %
-          (i + 1, aciertos_eval)))
+           (i + 1, aciertos_eval)))
     print(('Guardando modelo en %d iteraciones....' % (i + 1)))
     saver.save(
         sess,
@@ -496,7 +501,7 @@ if __name__ == "__main__":
 
     # Imprimir tiempo
     print(('Tiempo usado en %d iteraciones: %s ' %
-          (ITERACIONES_ENTRENAMIENTO - ultima_iteracion,
-           str(timedelta(seconds=int(round(time_dif)))))))
+           (ITERACIONES_ENTRENAMIENTO - ultima_iteracion,
+            str(timedelta(seconds=int(round(time_dif)))))))
 
     #"""
