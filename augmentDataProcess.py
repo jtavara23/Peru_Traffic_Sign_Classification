@@ -37,9 +37,12 @@ signnames = read_csv(
     "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
 
 train_normalized_file = '../signals_database/traffic-signs-data/train_1Normalized.p'  #just with clahe and scale [0,1]
-train_flipped_file = '../signals_database/traffic-signs-data/train_2Flipped.p'
-train_extended_file = '../signals_database/traffic-signs-data/train_3Extended8.p'
-train_processed_file = '../signals_database/traffic-signs-data/train_4Processed.p'  #unsorted and ready for trainingProcess
+train_flipped_file = '../signals_database/traffic-signs-data/train_2Flipped.p'#63538 images
+train_extended_balanced_file = '../signals_database/traffic-signs-data/train_3ExtendedBalanced.p' #270900 images
+train_extended_file = '../signals_database/traffic-signs-data/train_3Extended10.p' #698918 images
+train_processed_balanced_file = '../signals_database/traffic-signs-data/train_4ProcessedBalanced.p' # #unsorted and ready for trainingProcess
+train_processed_file = '../signals_database/traffic-signs-data/train_4Processed10.p' # #unsorted and ready for trainingProcess
+
 
 test_normalized_file = '../signals_database/traffic-signs-data/test_1Normalized.p'  # just with clahe and scale [0,1]
 test_processed_file = '../signals_database/traffic-signs-data/test_2Processed.p'  #sorted and ready for testing [not augmented]
@@ -117,7 +120,7 @@ def readOriginal(train_file):
 
 def save_data(file, path):
     with open(path, 'wb') as f:
-        pickle.dump(file, f, protocol=2)
+        pickle.dump(file, f, protocol=4)
 
 
 #----------------------------------------------------------------------------------------
@@ -424,7 +427,7 @@ def extend_balancing_classes(X, y, aug_intensity=0.5, isBalanced=False):
             augment_factor = (max_c // BATCH_SIZE) - 1
             remainder = max_c % BATCH_SIZE
         else:
-            augment_factor = 4
+            augment_factor = 10
             remainder = 0
 
         numb_new_imgs = 0
@@ -651,7 +654,7 @@ def showAugmentSamples(file):
     #WORKS WITH SCALE IMAGES(pixels between 0 & 1)
     X_input, y_output, cc = readOriginal(file)
     #X_input, y_output = ordenar(X_input, y_output, cc)
-    X_input = (X_input / 255)
+    #X_input = (X_input / 255)
 
     cant_conv = 5
     cant_orig_imgs = 6  #number of images TAKEN AS BASED
@@ -781,6 +784,7 @@ if __name__ == "__main__":
     print("Finish importing packages")
 
     #X_train, y_train, _ = readOriginal(train_file)
+    X_train, y_train, _ = readOriginal(train_processed_balanced_file)
     #showHistogram(train_file,'Class Distribution on Initial Data')
     #plot_some_examples(X_train, y_train,5)
 
@@ -788,7 +792,7 @@ if __name__ == "__main__":
     #showHistogram(X_test,'Class Distribution on Test Data')
     #plot_some_examples(X_test, y_test,5)
 
-    #--------------------NORMALIZE DATA---------------------------------------------------------
+    #--------------------NORMALIZE DATA----1st step-----------------------------------------------------
     #x, y, cc = readOriginal(train_file)
     #normalizeData(x, y, cc, train_normalized_file)
     #100%|################################################################| 39209/39209 [26:58<00:00, 24.23it/s]
@@ -796,20 +800,29 @@ if __name__ == "__main__":
     #normalizeData(x, y, cc, test_normalized_file)
     #100%|####################################################| 12630/12630 [08:04<00:00, 26.05it/s]
 
-    #-----------------------------------------------------------------------------
+    #------------------------------------2nd step-----------------------------------------
     # Prepare a dataset with flipped classes
-    doFlip(train_normalized_file, train_flipped_file)
-    #showHistogram(train_flipped_file,"Class Distribution Original Training Data vs New Flipped Traininig Data")
-    #-----------------------------------------------------------------------------
+    #doFlip(train_normalized_file, train_flipped_file)#Number of Flipped training examples = 63538
+    #showHistogram(train_flipped_file,"New Flipped Traininig Data")
+    """
+    X_train, y_train, class_counts1 = readOriginal(train_normalized_file)
+    X_train, y_train, class_counts2 = readOriginal(train_flipped_file)
+    plot_histograms(
+        'Class Distribution Original Training data vs New Flipped Training Data',
+        CLASS_TYPES, class_counts1, class_counts2, 'b',
+        'r')
+    """
+    #------------------------------3rd step-----------------------------------------------
     # Prepare a dataset with extended classes
     #doExtended(train_flipped_file, balanced=False)
     #doExtended(
     #    train_flipped_file,
     #    balanced=True)  # BE CAREFUL! WITH OVERWRITTEN THE FILE
 
-    #-------------------------PROCESS FILES------------------------------------------
-    #convertToGrayScale(train_normalized_file,train_processed_file)
-    #convertToGrayScale(test_normalized_file,test_processed_file)
+    #-------------------------PROCESS FILES 4th step------------------------------------------
+    #convertToGrayScale(train_extended_balanced_file,train_processed_balanced_file)
+    #convertToGrayScale(train_extended_file,train_processed_file)
+    #convertToGrayScale(test_normalized_file,test_processed_file)#only this was executed 2nd and then the flip
     #-----------------------------------------------------------------------------
 
     #-------JUST FOR CONFIRMATION ON THE TESTING PHASE-------------------------------
@@ -828,5 +841,5 @@ if __name__ == "__main__":
     #-----------------------------------------------------------------------------
     #showHistogram(test_flipped_file, "test flipped")
     #showAugmentSamples(test_flipped_file)
-    #showAugmentSamples(train_file)
+    #showAugmentSamples(train_normalized_file)
     #-----------------------------------------------------------------------------
