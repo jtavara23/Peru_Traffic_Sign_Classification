@@ -13,11 +13,13 @@ import datetime
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 np.set_printoptions(threshold=np.nan)
 
-BATCH_SIZE = 400  #421
+BATCH_SIZE = 2000  #525 for balanced
 NOMBRE_TENSOR_ENTRADA = 'inputX'
 NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 NOMBRE_PROBABILIDAD = 'mantener_probabilidad'
-rutaDeModelo = 'D:/signalsWindows/models5/'
+#rutaDeModelo = 'models/'
+rutaDeModelo = 'models_10-5_18-1/'
+#rutaDeModelo = 'models10extend/'
 NUM_TEST = 0
 
 
@@ -65,9 +67,10 @@ def procesamiento(X, y, type):
 
 
 #63150
-def writeResults(msg):
+def writeResults(msg, test_file):
     outFile = open("TestExtendedResults.txt", "a")
     outFile.write(repr(tf.train.latest_checkpoint(rutaDeModelo + '.')) + "\n")
+    outFile.write(test_file + "\n")
     outFile.write(msg)
     outFile.write("\n" + str(datetime.date.today()))
     outFile.write(
@@ -75,7 +78,8 @@ def writeResults(msg):
 
 
 if __name__ == "__main__":
-    test_file = '../signals_database/traffic-signs-data/testExtendedProcessed.p'
+    test_file = '../signals_database/traffic-signs-data/test_2Processed.p'
+    #test_file = '../signals_database/traffic-signs-data/test_5ExtendedProcessed.p'
     X_test, y_test = readData(test_file)
     NUM_TEST = y_test.shape[0]
 
@@ -88,7 +92,7 @@ if __name__ == "__main__":
     #tf.reset_default_graph()
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        saver = tf.train.import_meta_graph(rutaDeModelo + 'model-49296.meta')
+        saver = tf.train.import_meta_graph(rutaDeModelo + 'model-9450.meta')
         saver.restore(sess, tf.train.latest_checkpoint(rutaDeModelo + '.'))
         print("Modelo restaurado",
               tf.train.latest_checkpoint(rutaDeModelo + '.'))
@@ -97,15 +101,15 @@ if __name__ == "__main__":
         predictor = tf.get_collection("predictor")[0]
         #cantidad de imagenes a clasificar
         cant_evaluar = (imagenes_eval.shape[0])
-
+        print("Cantidad a evaluar: ", cant_evaluar)
         clases_pred = np.zeros(shape=cant_evaluar, dtype=np.int)
-
         #"""
         start = 0
         aux = 0
         print("Prediciendo clases...")
         while start < cant_evaluar:
             end = min(start + BATCH_SIZE, cant_evaluar)
+            print(end)
 
             images_evaluar = imagenes_eval[start:end, :]
             clases_evaluar = clases_eval[start:end, :]
@@ -148,6 +152,6 @@ if __name__ == "__main__":
         #plot_confusion_matrix(clases_pred, clases_deseadas,43)
         #plt.show()
 
-        writeResults(msg.format(acc, correct_sum, cant_evaluar))
+        writeResults(msg.format(acc, correct_sum, cant_evaluar), test_file)
         #"""
         print("Fin de evaluacion")
