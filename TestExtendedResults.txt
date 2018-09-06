@@ -1,0 +1,45 @@
+'models/.\\model-3780'
+../signals_database/traffic-signs-data/test_5ExtendedProcessed.p
+Acierto en el conjunto de Testing: 96.25% (85675 / 89010)
+2018-09-03
+-------------------------------------------------------------
+'models/.\\model-3780'
+../signals_database/traffic-signs-data/test_2Processed.p
+Acierto en el conjunto de Testing: 97.61% (12328 / 12630)
+2018-09-03
+-------------------------------------------------------------
+'models/.\\model-5292'
+../signals_database/traffic-signs-data/test_2Processed.p
+Acierto en el conjunto de Testing: 98.10% (12390 / 12630)
+2018-09-03
+-------------------------------------------------------------
+'models/.\\model-5292'
+../signals_database/traffic-signs-data/test_5ExtendedProcessed.p
+Acierto en el conjunto de Testing: 96.71% (86086 / 89010)
+2018-09-03
+-------------------------------------------------------------
+'models/./model-5292'
+../signals_database/traffic-signs-data/test_2Processed.p
+Acierto en el conjunto de Testing: 98.10% (12390 / 12630)
+2018-09-04
+-------------------------------------------------------------
+'models/./model-6804'
+../signals_database/traffic-signs-data/test_2Processed.p
+Acierto en el conjunto de Testing: 98.29% (12414 / 12630)
+2018-09-04
+-------------------------------------------------------------
+'models/./model-9450'
+../signals_database/traffic-signs-data/test_2Processed.p
+Acierto en el conjunto de Testing: 98.50% (12441 / 12630)
+2018-09-04
+-------------------------------------------------------------
+'models/./model-11340'
+../signals_database/traffic-signs-data/test_2Processed.p
+Acierto en el conjunto de Testing: 98.50% (12441 / 12630)
+2018-09-04
+-------------------------------------------------------------
+'models10extened/./model-7720'
+../signals_database/traffic-signs-data/test_2Processed.p
+Acierto en el conjunto de Testing: 98.43% (12432 / 12630)
+2018-09-05
+-------------------------------------------------------------
