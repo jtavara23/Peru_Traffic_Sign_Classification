@@ -28,28 +28,54 @@ NOMBRE_TENSOR_SALIDA_CALCULADA = 'outputYCalculada'
 NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 
 #rutaDeModelo = 'D:/signals/models5/'
-rutaDeModelo = 'models/'
-#tensorboard --logdir /media/josuetavara/Gaston/signals/models4
 DROPOUT = 0.5
 
-TASA_APRENDIZAJE = 5e-4  # 1,2,3ra epoca
-#TASA_APRENDIZAJE = 3e-4  # 4ta,5ta epoca
-#TASA_APRENDIZAJE = 1e-4  # 6ta,7ma
-
 #--------------FOR BALANCED DATASET-----------------------
+"""
+#rutaDeModelo = 'models/'
+#tensorboard --logdir /media/josuetavara/Gaston/signals/models4
+
+
+#TASA_APRENDIZAJE = 5e-4  # 1,2,3,4ta epoca
+TASA_APRENDIZAJE = 1e-4  # 5 ~10ma
+
 NUM_CLASSES = 0  #43
 NUM_TRAIN = 0  #270900 *0.75 = 203175
 NUM_TEST = 0  #270900 *0.25 = 67725
 IMAGE_SHAPE = 0  #(32,32,1)
 
 BATCH_SIZE = 525
-ITER_PER_EPOCA = 378  # = (203175 / 525)
+ITER_PER_EPOCA = 387  # = (203175 / 525)
 
 #ITERACIONES_ENTRENAMIENTO: (ITER_PER_EPOCA * EPOCAS)
-ITERACIONES_ENTRENAMIENTO = ITER_PER_EPOCA * 2
+ITERACIONES_ENTRENAMIENTO = ITER_PER_EPOCA * 25
 
-CHKP_GUARDAR_MODELO = 600
+CHKP_GUARDAR_MODELO = 350
 CHKP_REVISAR_PROGRESO = 50
+"""
+#-----------------------------------------------------------
+#--------------FOR 10 TIMES DATASET-----------------------
+rutaDeModelo = 'models10extend/'
+#rutaDeModelo = 'models10_10-5_18-1/'
+#tensorboard --logdir /media/josuetavara/Gaston/signals/models4
+
+
+TASA_APRENDIZAJE = 5e-4  # 1,2,3,4ta epoca
+#TASA_APRENDIZAJE = 1e-4  # 5 ~10ma
+
+NUM_CLASSES = 0  #43
+NUM_TRAIN = 0  #698918 *0.75 = 524188
+NUM_TEST = 0  #698918 *0.25 = 174730
+IMAGE_SHAPE = 0  #(32,32,1)
+
+BATCH_SIZE = 679
+ITER_PER_EPOCA = 772  # = (524188 / 679)
+
+#ITERACIONES_ENTRENAMIENTO: (ITER_PER_EPOCA * EPOCAS)
+ITERACIONES_ENTRENAMIENTO = ITER_PER_EPOCA * 10
+
+CHKP_GUARDAR_MODELO = 386
+CHKP_REVISAR_PROGRESO = 100
 
 #-----------------------------------------------------------
 
@@ -339,7 +365,8 @@ def create_cnn():
 
 if __name__ == "__main__":
 
-    train_file = '../signals_database/traffic-signs-data/train_4ProcessedBalanced.p'
+    #train_file = '../signals_database/traffic-signs-data/train_4ProcessedBalanced.p'
+    train_file = '../signals_database/traffic-signs-data/train_4Processed10.p'
     signnames = read_csv(
         "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
 
@@ -358,7 +385,7 @@ if __name__ == "__main__":
     print("Number of testing examples =", NUM_TEST)
     print("Image data shape =", IMAGE_SHAPE)
     print("Number of classes =", NUM_CLASSES)
-
+    print("TASA DE APRENDIZAJE: ", TASA_APRENDIZAJE)
     class_indices, examples_per_class, class_counts = np.unique(
         y_train, return_index=True, return_counts=True)
     class_indicesTest, examples_per_classTest, class_countsTest = np.unique(
@@ -377,7 +404,7 @@ if __name__ == "__main__":
     #print( X_train[10])
     #print( "**********************")
     #print( X_validation[0])
-
+    
     #--------------------------------CREACION DE LA RED------------------------------------------------
     #"""
     print("Inicio de creacion de la red")
