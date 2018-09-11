@@ -30,13 +30,16 @@ NOMBRE_TENSOR_SALIDA_CALCULADA = 'outputYCalculada'
 NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 
 ADAM_OPTIMIZER = True
-#tensorboard --logdir modelsBalanced/
+#ADAM_OPTIMIZER = False #Activate when LEARNING_DECAY = True
+LEARNING_DECAY = False
+#tensorboard --logdir modelsBalanced/model1/
 
 #--------------FOR BALANCED DATASET-----------------------
 #"""
-rutaDeModelo = 'modelsBalanced/'  #with same kernels size
+#rutaDeModelo = 'modelsBalanced/model1/'  
+rutaDeModelo = 'modelsBalanced/model2/'  
 
-TASA_APRENDIZAJE = 5e-4  # 1,2,3,4ta epoca  
+TASA_APRENDIZAJE = 5e-4
 
 NUM_CLASSES = 0  #43
 NUM_TRAIN = 0  #270900 *0.75 = 203175
@@ -47,7 +50,7 @@ BATCH_SIZE = 525
 ITER_PER_EPOCA = 387  # = (203175 / 525)
 
 #ITERACIONES_ENTRENAMIENTO: (ITER_PER_EPOCA * EPOCAS)
-ITERACIONES_ENTRENAMIENTO = ITER_PER_EPOCA * 20
+ITERACIONES_ENTRENAMIENTO = ITER_PER_EPOCA * 10
 
 CHKP_GUARDAR_MODELO = ITER_PER_EPOCA
 CHKP_REVISAR_PROGRESO = 50
@@ -211,7 +214,8 @@ def printArquitecture(tam_filtro1,tam_filtro2,tam_filtro3,num_filtro1,num_filtro
     print(" %-*s %-*s %-*s %-*s" % (10, "Layer 4", 10, "FC", 8, str(fc1_inputs), 15, str(dropout_fc1)))
     print(" %-*s %-*s %-*s %-*s" % (10, "Layer 5", 10, "FC", 8, str(fc2_inputs), 15, str("--")))    
     print("---------------- PARAMETERS -----------------")
-    print("     Learning rate decay: Enabled")
+    print("     Learning rate decay: " + ("Enabled" if LEARNING_DECAY else "Disabled"))
+    print("           Learning rate: {}".format(TASA_APRENDIZAJE))
     print("               OPTIMIZER: " + ("ADAM Optimizer" if ADAM_OPTIMIZER else "Gradient Descent Optimizer"))
     print("       L2 Regularization: " + ("Enabled (L2 Lambda = {})\n\n".format(L2_lambda)))
 
@@ -345,20 +349,25 @@ def create_cnn():
     with tf.name_scope("entrenamiento"):
         #Funcion de optimizacion
         iterac_entren = tf.Variable(0, name='iterac_entren', trainable=False)
-        exp_lr = tf.train.exponential_decay(TASA_APRENDIZAJE, iterac_entren, ITER_PER_EPOCA*5, 0.99, staircase=True, name='ExponentialDecay')#decay every ITER_PER_EPOCA*5
+        #A las 15 iteraciones se cambio el (iterperepoca *5) -> (iterperepoca)
+        if LEARNING_DECAY:
+            lr = tf.train.exponential_decay(TASA_APRENDIZAJE, iterac_entren, ITER_PER_EPOCA, 0.99, staircase=True, name='ExponentialDecay')
+            tf.summary.scalar('learning_rate_decay',lr)
+        else:
+            lr = TASA_APRENDIZAJE
+            tf.summary.scalar('learning_rate',lr)
         #optimizador = tf.train.AdamOptimizer(TASA_APRENDIZAJE).minimize(error, global_step=iterac_entren)
         if ADAM_OPTIMIZER:
-            optimizador = tf.train.AdamOptimizer(exp_lr).minimize(error, global_step=iterac_entren)
+            optimizador = tf.train.AdamOptimizer(lr).minimize(error, global_step=iterac_entren)
         else:
-            optimizador = tf.train.GradientDescentOptimizer(exp_lr).minimize(error, global_step=iterac_entren)
-        tf.summary.scalar('learning_rate_decay',exp_lr)
+            optimizador = tf.train.GradientDescentOptimizer(lr).minimize(error, global_step=iterac_entren)
     
-    with tf.name_scope("Acierto"):
+    with tf.name_scope("Evaluacion"):
         # evaluacion
         prediccion_correcta = tf.equal(
             tf.argmax(y_calculada, 1), tf.argmax(y_deseada, 1))
         acierto = tf.reduce_mean(tf.cast(prediccion_correcta, 'float'))
-        tf.add_to_collection("calculador", acierto)
+        tf.add_to_collection("mean_acc", acierto)
         tf.summary.scalar("acierto", acierto)
 
     resumen = tf.summary.merge_all()
@@ -518,8 +527,8 @@ if __name__ == "__main__":
     #--------------------------------------------------------------
     imagenes_eval, clases_eval = shuffle(imagenes_eval, clases_eval)
     feed_dictx = {
-        entradas: imagenes_eval[:2000],
-        y_deseada: clases_eval[:2000],
+        entradas: imagenes_eval[:2500],
+        y_deseada: clases_eval[:2500],
         is_training: False#dont use dropout in Testing
     }
     print_write_validationSet(sess, resumen, acierto, error, feed_dictx, evalua_writer, i)

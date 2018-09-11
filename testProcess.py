@@ -19,10 +19,10 @@ NOMBRE_TENSOR_ENTRADA = 'inputX'
 NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 NOMBRE_PROBABILIDAD = 'mantener_probabilidad'
 
-rutaDeModelo = 'modelsBalanced/'
+rutaDeModelo = 'modelsBalanced/model2/'
 #rutaDeModelo = 'models10extend/'
 
-lastModelName = 'model-5805.meta'
+lastModelName = 'model-3870.meta'
 
 test_file = '../signals_database/traffic-signs-data/test_2Processed.p'
 
@@ -74,7 +74,7 @@ def procesamiento(X, y, type):
 
 #63150
 def writeResults(msg, test_file):
-    outFile = open("TestExtendedResults.txt", "a")
+    outFile = open(rutaDeModelo+"testResults/testResult.txt", "a")
     outFile.write(repr(tf.train.latest_checkpoint(rutaDeModelo + '.')) + "\n")
     outFile.write(test_file + "\n")
     outFile.write(msg)
