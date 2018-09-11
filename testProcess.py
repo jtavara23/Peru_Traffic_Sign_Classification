@@ -13,14 +13,20 @@ import datetime
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 np.set_printoptions(threshold=np.nan)
 
-BATCH_SIZE = 2000  #525 for balanced
+NUM_TEST = 0
+BATCH_SIZE = 2000
 NOMBRE_TENSOR_ENTRADA = 'inputX'
 NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 NOMBRE_PROBABILIDAD = 'mantener_probabilidad'
-#rutaDeModelo = 'models/'
-rutaDeModelo = 'models_10-5_18-1/'
+
+rutaDeModelo = 'modelsBalanced/'
 #rutaDeModelo = 'models10extend/'
-NUM_TEST = 0
+
+lastModelName = 'model-5805.meta'
+
+test_file = '../signals_database/traffic-signs-data/test_2Processed.p'
+
+#test_file = '../signals_database/traffic-signs-data/test_5ExtendedProcessed.p'
 
 
 def procesamiento(X, y, type):
@@ -78,8 +84,7 @@ def writeResults(msg, test_file):
 
 
 if __name__ == "__main__":
-    test_file = '../signals_database/traffic-signs-data/test_2Processed.p'
-    #test_file = '../signals_database/traffic-signs-data/test_5ExtendedProcessed.p'
+
     X_test, y_test = readData(test_file)
     NUM_TEST = y_test.shape[0]
 
@@ -92,7 +97,7 @@ if __name__ == "__main__":
     #tf.reset_default_graph()
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        saver = tf.train.import_meta_graph(rutaDeModelo + 'model-9450.meta')
+        saver = tf.train.import_meta_graph(rutaDeModelo + lastModelName)
         saver.restore(sess, tf.train.latest_checkpoint(rutaDeModelo + '.'))
         print("Modelo restaurado",
               tf.train.latest_checkpoint(rutaDeModelo + '.'))
