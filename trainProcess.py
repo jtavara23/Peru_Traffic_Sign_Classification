@@ -13,6 +13,8 @@ from datetime import timedelta
 from matplotlib import pyplot as plt
 from funcionesAuxiliares import readData, display, plot_confusion_matrix, plot_example_errors, plot_conv_layer
 from subprocess import check_output
+from sklearn.utils import shuffle
+
 #pip install tqdm
 from tqdm import tqdm
 from tqdm import trange
@@ -27,17 +29,14 @@ NOMBRE_PROBABILIDAD = 'mantener_probabilidad'
 NOMBRE_TENSOR_SALIDA_CALCULADA = 'outputYCalculada'
 NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 
-#rutaDeModelo = 'D:/signals/models5/'
-DROPOUT = 0.5
+ADAM_OPTIMIZER = True
+#tensorboard --logdir modelsBalanced/
 
 #--------------FOR BALANCED DATASET-----------------------
-"""
-#rutaDeModelo = 'models/'
-#tensorboard --logdir /media/josuetavara/Gaston/signals/models4
+#"""
+rutaDeModelo = 'modelsBalanced/'  #with same kernels size
 
-
-#TASA_APRENDIZAJE = 5e-4  # 1,2,3,4ta epoca
-TASA_APRENDIZAJE = 1e-4  # 5 ~10ma
+TASA_APRENDIZAJE = 5e-4  # 1,2,3,4ta epoca  
 
 NUM_CLASSES = 0  #43
 NUM_TRAIN = 0  #270900 *0.75 = 203175
@@ -48,20 +47,16 @@ BATCH_SIZE = 525
 ITER_PER_EPOCA = 387  # = (203175 / 525)
 
 #ITERACIONES_ENTRENAMIENTO: (ITER_PER_EPOCA * EPOCAS)
-ITERACIONES_ENTRENAMIENTO = ITER_PER_EPOCA * 25
+ITERACIONES_ENTRENAMIENTO = ITER_PER_EPOCA * 20
 
-CHKP_GUARDAR_MODELO = 350
+CHKP_GUARDAR_MODELO = ITER_PER_EPOCA
 CHKP_REVISAR_PROGRESO = 50
-"""
+#"""
 #-----------------------------------------------------------
-#--------------FOR 10 TIMES DATASET-----------------------
-rutaDeModelo = 'models10extend/'
-#rutaDeModelo = 'models10_10-5_18-1/'
-#tensorboard --logdir /media/josuetavara/Gaston/signals/models4
+"""#--------------FOR 10 TIMES DATASET-----------------------
+rutaDeModelo = 'models10extend/' #with same kernels size
 
-
-TASA_APRENDIZAJE = 5e-4  # 1,2,3,4ta epoca
-#TASA_APRENDIZAJE = 1e-4  # 5 ~10ma
+TASA_APRENDIZAJE = 5e-4 
 
 NUM_CLASSES = 0  #43
 NUM_TRAIN = 0  #698918 *0.75 = 524188
@@ -74,11 +69,11 @@ ITER_PER_EPOCA = 772  # = (524188 / 679)
 #ITERACIONES_ENTRENAMIENTO: (ITER_PER_EPOCA * EPOCAS)
 ITERACIONES_ENTRENAMIENTO = ITER_PER_EPOCA * 10
 
-CHKP_GUARDAR_MODELO = 386
+CHKP_GUARDAR_MODELO = ITER_PER_EPOCA
 CHKP_REVISAR_PROGRESO = 100
 
 #-----------------------------------------------------------
-
+"""
 
 def siguiente_batch_entren(batch_size, cant_imag_entrenamiento):
 
@@ -148,7 +143,7 @@ def flatten_layer(layer):
     layer_shape = layer.get_shape()
     #print("Layer shape: ", layer_shape)
     num_features = layer_shape[1:4].num_elements()
-    #print("num_features: ", num_features)
+    # The number of features is: img_height * img_width * num_channels
     layer_flat = tf.reshape(layer, [-1, num_features])
     #print("layer_flat: : ", layer_flat)
 
@@ -165,16 +160,13 @@ def conv_layer(nombre, entrada, num_inp_channels, filter_size, num_filters,
             input=entrada, filter=pesos, strides=[1, 1, 1, 1], padding='SAME')
 
         convolucion += biases
+        print( nombre,"conv: ",convolucion.get_shape(),"\n***********")
         #puede ser despues de pooling
         convolucion = tf.nn.relu(convolucion)
 
         if use_pooling:
-            convolucion = tf.nn.max_pool(
-                value=convolucion,
-                ksize=[1, 2, 2, 1],
-                strides=[1, 2, 2, 1],
-                padding='SAME')
-        #print( nombre,": ",convolucion.get_shape(),"\n***********")
+            convolucion = doPool(convolucion,2)
+        print( nombre,"after pooling: ",convolucion.get_shape(),"\n***********\n")
     return convolucion, pesos
 
 
@@ -183,7 +175,7 @@ def doPool(convolucion, size):
         value=convolucion,
         ksize=[1, size, size, 1],
         strides=[1, size, size, 1],
-        padding='SAME')
+        padding='VALID')
 
 
 def capa_fc(nombre, entrada, num_inputs, num_outputs, use_relu=True):
@@ -200,6 +192,28 @@ def capa_fc(nombre, entrada, num_inputs, num_outputs, use_relu=True):
             "No uso Relu"
 
     return layer, pesos
+
+
+def printArquitecture(tam_filtro1,tam_filtro2,tam_filtro3,num_filtro1,num_filtro2,num_filtro3,dropout_conv1,dropout_conv2,dropout_conv3,fc1_inputs,fc2_inputs,dropout_fc1, L2_lambda):
+    print("=================== DATA ====================")
+    print("            Training set: {} examples".format(NUM_TRAIN))
+    print("          Validation set: {} examples".format(NUM_TEST))
+    print("              Batch size: {}".format(BATCH_SIZE))
+    print("       Number of classes: {}".format(NUM_CLASSES)) 
+    print("        Image data shape: {}".format(IMAGE_SHAPE))
+
+    print("=================== MODEL ===================")
+    print("--------------- ARCHITECTURE ----------------")  
+    print(" %-*s %-*s %-*s %-*s" % (10, "", 10, "Type", 8, "Size", 15, "Dropout (keep p)"))    
+    print(" %-*s %-*s %-*s %-*s" % (10, "Layer 1", 10, "{}x{} Conv".format(tam_filtro1, tam_filtro1), 8, str(num_filtro1), 15, str(dropout_conv1)))    
+    print(" %-*s %-*s %-*s %-*s" % (10, "Layer 2", 10, "{}x{} Conv".format(tam_filtro2, tam_filtro2), 8, str(num_filtro2), 15, str(dropout_conv2)))    
+    print(" %-*s %-*s %-*s %-*s" % (10, "Layer 3", 10, "{}x{} Conv".format(tam_filtro3, tam_filtro3), 8, str(num_filtro3), 15, str(dropout_conv3)))    
+    print(" %-*s %-*s %-*s %-*s" % (10, "Layer 4", 10, "FC", 8, str(fc1_inputs), 15, str(dropout_fc1)))
+    print(" %-*s %-*s %-*s %-*s" % (10, "Layer 5", 10, "FC", 8, str(fc2_inputs), 15, str("--")))    
+    print("---------------- PARAMETERS -----------------")
+    print("     Learning rate decay: Enabled")
+    print("               OPTIMIZER: " + ("ADAM Optimizer" if ADAM_OPTIMIZER else "Gradient Descent Optimizer"))
+    print("       L2 Regularization: " + ("Enabled (L2 Lambda = {})\n\n".format(L2_lambda)))
 
 
 def create_cnn():
@@ -221,8 +235,9 @@ def create_cnn():
     #keep_prob = tf.placeholder('float',name=NOMBRE_PROBABILIDAD)
     is_training = tf.placeholder(tf.bool, name=NOMBRE_PROBABILIDAD)
 
-    tam_filtro1 = 5
+    tam_filtro1 = 3
     num_filtro1 = 32
+    dropout_conv1 = 0.8
     capa_conv1, pesos_conv1 = conv_layer(
         nombre="convolucion1",
         entrada=entradas,
@@ -231,11 +246,12 @@ def create_cnn():
         num_filters=num_filtro1,
         use_pooling=True)
     capa_conv1_drop = tf.cond(is_training,
-                              lambda: tf.nn.dropout(capa_conv1, keep_prob=0.8),
+                              lambda: tf.nn.dropout(capa_conv1, keep_prob=dropout_conv1),
                               lambda: capa_conv1)
 
     tam_filtro2 = 5
     num_filtro2 = 64
+    dropout_conv2 = 0.7
     capa_conv2, pesos_conv2 = conv_layer(
         nombre="convolucion2",
         entrada=capa_conv1_drop,
@@ -244,11 +260,12 @@ def create_cnn():
         num_filters=num_filtro2,
         use_pooling=True)
     capa_conv2_drop = tf.cond(is_training,
-                              lambda: tf.nn.dropout(capa_conv2, keep_prob=0.7),
+                              lambda: tf.nn.dropout(capa_conv2, keep_prob=dropout_conv2),
                               lambda: capa_conv2)
 
     tam_filtro3 = 5
     num_filtro3 = 128
+    dropout_conv3 = 0.6
     capa_conv3, pesos_conv3 = conv_layer(
         nombre="convolucion3",
         entrada=capa_conv2_drop,
@@ -257,116 +274,127 @@ def create_cnn():
         num_filters=num_filtro3,
         use_pooling=True)
     capa_conv3_drop = tf.cond(is_training,
-                              lambda: tf.nn.dropout(capa_conv3, keep_prob=0.6),
+                              lambda: tf.nn.dropout(capa_conv3, keep_prob=dropout_conv3),
                               lambda: capa_conv3)
 
-    #---
-    # Fully connected
-    """
-    # 1st stage output
-    pool1 = doPool(capa_conv1_drop, size = 4)
-    shape = pool1.get_shape().as_list()
-    #print( "Shpeee ", shape)
-    pool1 = tf.reshape(pool1, [-1, shape[1] * shape[2] * shape[3]])
-    
-    # 2nd stage output
-    pool2 = doPool(capa_conv2_drop, size = 2)
-    shape = pool2.get_shape().as_list()
-    pool2 = tf.reshape(pool2, [-1, shape[1] * shape[2] * shape[3]])    
-    
-    # 3rd stage output
-    shape = capa_conv3_drop.get_shape().as_list()
-    pool3 = tf.reshape(capa_conv3_drop, [-1, shape[1] * shape[2] * shape[3]])
-    
-    layer_flat = tf.concat([pool1, pool2, pool3],1)
-    print( "1:",layer_flat.get_shape())
-    num_fc_layers = layer_flat.get_shape()[1]
-    print( "2:",num_fc_layers)
-    """
-    #with tf.variable_scope('fc4'):
-    #fc4 = fully_connected_relu(layer_flat, size = 1024)
-    #fc4 = tf.cond(is_training, lambda: tf.nn.dropout(fc4, keep_prob = 0.5), lambda: fc4)
-    #with tf.variable_scope('out'):
-    #logits = fully_connected(fc4, size = params.num_classes)
-
-    #"""
     capa_conv1_drop = doPool(capa_conv1_drop, size=4)
+    print( "after pooling:capa_conv1_drop: ",capa_conv1_drop.get_shape(),"\n***********\n")
     capa_conv2_drop = doPool(capa_conv2_drop, size=2)
+    print("after pooling:capa_conv2_drop: ",capa_conv2_drop.get_shape(),"\n***********\n")
 
     layer_flat1, num_fc_layers1 = flatten_layer(capa_conv1_drop)
     layer_flat2, num_fc_layers2 = flatten_layer(capa_conv2_drop)
     layer_flat3, num_fc_layers3 = flatten_layer(capa_conv3_drop)
-
-    layer_flat = tf.concat([layer_flat1, layer_flat2, layer_flat3],
-                           1)  #(?, 7168)
-    #print( "1:",layer_flat.get_shape())
+    print("NUM FC LAYER:",num_fc_layers1,num_fc_layers2,num_fc_layers3 )
+    
+    layer_flat = tf.concat([layer_flat1, layer_flat2, layer_flat3],1)  #(?, 7168)
+    print( "1:",layer_flat.get_shape())
     num_fc_layers = num_fc_layers1 + num_fc_layers2 + num_fc_layers3  # (7168)
-    #print( "2:",num_fc_layers)
+    print( "2:",num_fc_layers)
     #"""
 
     #---------------------------Capa totalmente conectada--------------------------------------------
     #The previous layer.,  Num. inputs from prev. layer. , Num. outputs.
+    fc1_inputs = num_fc_layers
+    fc1_outputs = 1024
+    dropout_fc1 = 0.5
     capa_fc1, pesos_fc1 = capa_fc(
         nombre="FC1",
         entrada=layer_flat,
-        num_inputs=num_fc_layers,
-        num_outputs=1024,
+        num_inputs=fc1_inputs,
+        num_outputs=fc1_outputs,
         use_relu=True)
 
     fc_capa1_drop = tf.cond(is_training,
-                            lambda: tf.nn.dropout(capa_fc1, keep_prob=0.5),
+                            lambda: tf.nn.dropout(capa_fc1, keep_prob=dropout_fc1),
                             lambda: capa_fc1)
 
+    fc2_inputs = 1024
+    fc2_outputs = NUM_CLASSES
     capa_fc2, pesos_fc2 = capa_fc(
         nombre="FC2",
         entrada=fc_capa1_drop,
-        num_inputs=1024,
-        num_outputs=NUM_CLASSES,
+        num_inputs=fc2_inputs,
+        num_outputs=fc2_outputs,
         use_relu=False)
     #y_calculada = capa_fc2
     y_calculada = tf.nn.softmax(capa_fc2, name=NOMBRE_TENSOR_SALIDA_CALCULADA)
-    predictor = tf.argmax(y_calculada, dimension=1)
+    predictor = tf.argmax(y_calculada, axis=1)
+
     tf.add_to_collection("predictor", predictor)
     tf.add_to_collection("acuracia", y_calculada)
+    tf.summary.histogram('activations', y_calculada)
 
-    regularizers = (tf.nn.l2_loss(pesos_conv1) + tf.nn.l2_loss(pesos_conv2) +
-                    tf.nn.l2_loss(pesos_conv3) + tf.nn.l2_loss(pesos_fc1) +
-                    tf.nn.l2_loss(pesos_fc2))
-    #------------------------------------------------------------
-
-    #el error que queremos minimizar va a estar en funcion de lo calculado con lo deseado(real)
-    #error = -tf.reduce_sum(y_deseada * tf.log(y_calculada))
-    softmax_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(
-        logits=capa_fc2, labels=y_deseada)
-    error = tf.reduce_mean(
-        softmax_cross_entropy, name="error") + 0.0001 * regularizers
+    #--------------------------------------------------------------------------
+    with tf.name_scope("Regular_Loss"):
+        softmax_cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(
+            logits=capa_fc2, labels=y_deseada)
+        
+        cross_entropy_mean = tf.reduce_mean(softmax_cross_entropy, name="error")
+        tf.summary.scalar('cross_entropy', cross_entropy_mean)
+    
+    with tf.name_scope("L2_Regularization_Method"):
+        regularizers = (tf.nn.l2_loss(pesos_conv1) + tf.nn.l2_loss(pesos_conv2) +
+                        tf.nn.l2_loss(pesos_conv3) + tf.nn.l2_loss(pesos_fc1) +
+                        tf.nn.l2_loss(pesos_fc2))
+        L2_lambda = 0.0001
+        error =  cross_entropy_mean + L2_lambda * regularizers
+        tf.summary.scalar('error_Acc', error)
+    #---------------------------------------------------------------------------
 
     with tf.name_scope("entrenamiento"):
         #Funcion de optimizacion
         iterac_entren = tf.Variable(0, name='iterac_entren', trainable=False)
-        #exp_lr = tf.train.exponential_decay(TASA_APRENDIZAJE, iterac_entren, 1000, 0.96, staircase=True, name='expo_rate')
-        #optimizador = tf.train.AdamOptimizer(exp_lr).minimize(error, global_step=iterac_entren)
-        optimizador = tf.train.AdamOptimizer(TASA_APRENDIZAJE).minimize(
-            error, global_step=iterac_entren)
-
+        exp_lr = tf.train.exponential_decay(TASA_APRENDIZAJE, iterac_entren, ITER_PER_EPOCA*5, 0.99, staircase=True, name='ExponentialDecay')#decay every ITER_PER_EPOCA*5
+        #optimizador = tf.train.AdamOptimizer(TASA_APRENDIZAJE).minimize(error, global_step=iterac_entren)
+        if ADAM_OPTIMIZER:
+            optimizador = tf.train.AdamOptimizer(exp_lr).minimize(error, global_step=iterac_entren)
+        else:
+            optimizador = tf.train.GradientDescentOptimizer(exp_lr).minimize(error, global_step=iterac_entren)
+        tf.summary.scalar('learning_rate_decay',exp_lr)
+    
     with tf.name_scope("Acierto"):
         # evaluacion
         prediccion_correcta = tf.equal(
             tf.argmax(y_calculada, 1), tf.argmax(y_deseada, 1))
-        #prediccion_correcta = tf.equal(predictor, tf.argmax(y_deseada,1)) Antes de entrenamiento7 estaba esto
         acierto = tf.reduce_mean(tf.cast(prediccion_correcta, 'float'))
         tf.add_to_collection("calculador", acierto)
         tf.summary.scalar("acierto", acierto)
 
     resumen = tf.summary.merge_all()
+    
+    printArquitecture(tam_filtro1,tam_filtro2,tam_filtro3,num_filtro1,num_filtro2,num_filtro3,dropout_conv1,dropout_conv2,dropout_conv3,fc1_inputs,fc2_inputs,dropout_fc1, L2_lambda)
 
-    return resumen, entradas, y_deseada, is_training, iterac_entren, optimizador, acierto, predictor
+    return resumen, entradas, y_deseada, is_training, iterac_entren, optimizador, acierto, error, predictor
 
+#===============================================================================================
+#===============================================================================================
+
+def print_write_validationSet(sess, resumen, acierto, error, feed_dictx, evalua_writer, i ):
+    [resu, aciertos_eval, er] = sess.run([resumen, acierto, error], feed_dict=feed_dictx)
+    evalua_writer.add_summary(resu, i)
+    print('En la iteracion %d:'%(i+1))
+    print(('Acc. Valid Set => %.4f' %(aciertos_eval)))
+    print(('Error Valid Set => %.4f \n' %(er)))
+
+def print_write_trainSet(sess, resumen, acierto, error, feed_dictx, i ):
+    [resu, aciertos_train, er] = sess.run([resumen, acierto, error], feed_dict=feed_dictx)
+    print('En la iteracion %d:'%(i+1))
+    print(('Acc. Train Set => %.4f ' % (aciertos_train)))
+    print(('Error Train Set => %.4f \n' % (er)))
+
+def saveModel(sess, i , rutaDeModelo, saver):
+    print(('Guardando modelo en %d iteraciones....' % (i + 1)))
+    saver.save(
+        sess,
+        rutaDeModelo + NOMBRE_MODELO,
+        global_step=i + 1,
+        write_meta_graph=True)
 
 if __name__ == "__main__":
 
-    #train_file = '../signals_database/traffic-signs-data/train_4ProcessedBalanced.p'
-    train_file = '../signals_database/traffic-signs-data/train_4Processed10.p'
+    train_file = '../signals_database/traffic-signs-data/train_4ProcessedBalanced.p'
+    #train_file = '../signals_database/traffic-signs-data/train_4Processed10.p'
     signnames = read_csv(
         "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
 
@@ -381,11 +409,7 @@ if __name__ == "__main__":
     IMAGE_SHAPE = X_train[0].shape
     NUM_CLASSES = len(set(y_train))
 
-    print("Number of training examples =", NUM_TRAIN)
-    print("Number of testing examples =", NUM_TEST)
-    print("Image data shape =", IMAGE_SHAPE)
-    print("Number of classes =", NUM_CLASSES)
-    print("TASA DE APRENDIZAJE: ", TASA_APRENDIZAJE)
+
     class_indices, examples_per_class, class_counts = np.unique(
         y_train, return_index=True, return_counts=True)
     class_indicesTest, examples_per_classTest, class_countsTest = np.unique(
@@ -410,17 +434,16 @@ if __name__ == "__main__":
     print("Inicio de creacion de la red")
     tf.reset_default_graph()
     sess = tf.Session()
-    resumen, entradas, y_deseada, is_training, iterac_entren, optimizador, acierto, predictor = create_cnn(
+    resumen, entradas, y_deseada, is_training, iterac_entren, optimizador, acierto, error, predictor = create_cnn(
     )
 
     sess.run(tf.global_variables_initializer())
 
-    entren_writer = tf.summary.FileWriter(rutaDeModelo + 'entrenamiento1',
+    entren_writer = tf.summary.FileWriter(rutaDeModelo + 'entrenamiento',
                                           sess.graph)
     #entren_writer.add_graph(sess.graph)
-    evalua_writer = tf.summary.FileWriter(rutaDeModelo + 'evaluacion1',
+    evalua_writer = tf.summary.FileWriter(rutaDeModelo + 'evaluacion',
                                           sess.graph)
-    #numero = 1024
 
     saver = tf.train.Saver(max_to_keep=None)
     ckpt = tf.train.get_checkpoint_state(rutaDeModelo + '.')
@@ -441,14 +464,13 @@ if __name__ == "__main__":
     clases_calc = np.zeros(shape=NUM_TEST, dtype=np.int)
 
     comienzo_time = time.time()
-
+    #"""
     #Desde la ultima iteracion hasta el ITERACIONES_ENTRENAMIENTO dado
     for i in trange(ultima_iteracion, ITERACIONES_ENTRENAMIENTO):
         #Obtener nuevo subconjunto(batch) de (BATCH_SIZE =100) imagenes
         batch_img_entrada, batch_img_clase = siguiente_batch_entren(
             BATCH_SIZE, NUM_TRAIN)
         # Entrenar el batch
-        #[resu, _ ] = sess.run([resumen,optimizador], feed_dict={entradas: batch_img_entrada, y_deseada: batch_img_clase, keep_prob: DROPOUT})
         [resu, _] = sess.run(
             [resumen, optimizador],
             feed_dict={
@@ -462,64 +484,48 @@ if __name__ == "__main__":
         # Observar el progreso cada 'CHKP_REVISAR_PROGRESO' iteraciones
         if (i + 1) % CHKP_REVISAR_PROGRESO == 0:
             print(
-                ('Tiempo usado en %d iteraciones: %s ' %
+                ('Time in %d iteraciones: %s ' %
                  (i + 1 - ultima_iteracion,
-                  str(
-                      timedelta(
-                          seconds=int(round(time.time() - comienzo_time)))))))
+                  str( timedelta( seconds=int(round(time.time() - comienzo_time)))))))
+            #--------------------------------------------------------------
             feed_dictx = {
                 entradas: batch_img_entrada,
                 y_deseada: batch_img_clase,
-                is_training: False
+                is_training: False#dont use dropout in Testing
             }
-            [resu, aciertos_train] = sess.run(
-                [resumen, acierto], feed_dict=feed_dictx)
-            print(('En la iteracion %d , Acierto de Entrenamiento => %.4f ' %
-                   (i + 1, aciertos_train)))
-
+            
+            print_write_trainSet(sess, resumen, acierto, error, feed_dictx, i )
+            #--------------------------------------------------------------
+            imagenes_eval, clases_eval = shuffle(imagenes_eval, clases_eval)
             feed_dictx = {
-                entradas: imagenes_eval[:2000],
-                y_deseada: clases_eval[:2000],
-                is_training: False
+                entradas: imagenes_eval[:2500],
+                y_deseada: clases_eval[:2500],
+                is_training: False#dont use dropout in Testing
             }
-            [resu, aciertos_eval] = sess.run(
-                [resumen, acierto], feed_dict=feed_dictx)
-            evalua_writer.add_summary(resu, i)
-            print(('En la iteracion %d , Acierto de Evaluacion => %.4f \n' %
-                   (i + 1, aciertos_eval)))
+            print_write_validationSet(sess, resumen, acierto, error, feed_dictx, evalua_writer, i)
+            #--------------------------------------------------------------
 
         #Crear 'punto de control' cuando se llego a las CHKP_GUARDAR_MODELO iteraciones
         if (i + 1) % CHKP_GUARDAR_MODELO == 0:
-            print(('Guardando modelo en %d iteraciones....' % (i + 1)))
-            saver.save(
-                sess,
-                rutaDeModelo + NOMBRE_MODELO,
-                global_step=i + 1,
-                write_meta_graph=True)
-
+            saveModel(sess, i , rutaDeModelo, saver)
+    #--------------------------------------------------------------
     feed_dictx = {
         entradas: batch_img_entrada,
         y_deseada: batch_img_clase,
-        is_training: False
+        is_training: False#dont use dropout in Testing
     }
-    [resu, aciertos_train] = sess.run([resumen, acierto], feed_dict=feed_dictx)
-    print(('En la iteracion %d , Acierto de Entrenamiento => %.4f ' %
-           (i + 1, aciertos_train)))
+    print_write_trainSet(sess, resumen, acierto, error, feed_dictx, i )
+    #--------------------------------------------------------------
+    imagenes_eval, clases_eval = shuffle(imagenes_eval, clases_eval)
     feed_dictx = {
         entradas: imagenes_eval[:2000],
         y_deseada: clases_eval[:2000],
-        is_training: False
+        is_training: False#dont use dropout in Testing
     }
-    [resu, aciertos_eval] = sess.run([resumen, acierto], feed_dict=feed_dictx)
-    evalua_writer.add_summary(resu, i)
-    print(('En la iteracion %d , Acierto de Evaluacion => %.4f \n' %
-           (i + 1, aciertos_eval)))
-    print(('Guardando modelo en %d iteraciones....' % (i + 1)))
-    saver.save(
-        sess,
-        rutaDeModelo + NOMBRE_MODELO,
-        global_step=i + 1,
-        write_meta_graph=True)
+    print_write_validationSet(sess, resumen, acierto, error, feed_dictx, evalua_writer, i)
+    #--------------------------------------------------------------
+
+    saveModel(sess, i , rutaDeModelo, saver)
 
     #Fin del proceso de entrenamiento y validacion del modelo
     end_time = time.time()
