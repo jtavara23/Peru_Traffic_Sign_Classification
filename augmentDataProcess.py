@@ -843,3 +843,10 @@ if __name__ == "__main__":
     #showAugmentSamples(test_flipped_file)
     #showAugmentSamples(train_normalized_file)
     #-----------------------------------------------------------------------------
+    #X_train, y_train, class_counts1 = readOriginal(train_flipped_file)
+    #X_train, y_train, class_counts2 = readOriginal(train_extended_file)
+
+    #plot_histograms(
+    #    'Class Distribution Flipped Training data vs Balanced Training Data',
+    #    CLASS_TYPES, class_counts1, class_counts2, 'r',
+    #    'c') 
