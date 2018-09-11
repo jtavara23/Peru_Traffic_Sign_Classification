@@ -2,7 +2,7 @@
 __pycache__
 *.ini
 *.jpg
-/models5
-/models4
-/BonzzuTraining
+/Logs terminal process
+/modelsBalanced
+/models10extend
 ThesisCode.code-workspace
