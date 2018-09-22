@@ -21,7 +21,7 @@ import sys
 #pip install tqdm
 from tqdm import tqdm
 from tqdm import trange
-
+from sklearn.model_selection import train_test_split
 #np.set_printoptions(threshold=np.nan)
 
 NUM_TRAIN = 0
@@ -779,12 +779,17 @@ def plotCmpnNewTestHistograms():
     plot_histograms('Class Distribution across New Extended Test Data',
                     CLASS_TYPES, class_counts1, class_counts2, 'g', 'm')
 
+def saveSplitData(X_data,y_data,targetFile):
+    new_data = {'features': X_data, 'labels': y_data}
+    save_data(new_data, targetFile)
+    print("Pickle saved.")
+
 
 if __name__ == "__main__":
     print("Finish importing packages")
 
     #X_train, y_train, _ = readOriginal(train_file)
-    X_train, y_train, _ = readOriginal(train_processed_balanced_file)
+    #X_train, y_train, _ = readOriginal(train_processed_balanced_file)
     #showHistogram(train_file,'Class Distribution on Initial Data')
     #plot_some_examples(X_train, y_train,5)
 
@@ -849,4 +854,12 @@ if __name__ == "__main__":
     #plot_histograms(
     #    'Class Distribution Flipped Training data vs Balanced Training Data',
     #    CLASS_TYPES, class_counts1, class_counts2, 'r',
-    #    'c') 
+    #    'c')
+    #
+    train_split_balanced = '../signals_database/traffic-signs-data/train5_split_balanced.p'
+    validation_split_balanced = '../signals_database/traffic-signs-data/validation5_split_balanced.p'
+    X_train, y_train = readData(train_processed_balanced_file)
+    
+    X_train, X_validation, y_train, y_validation = train_test_split(X_train, y_train, test_size=0.25) 
+    saveSplitData(X_train,y_train,train_split_balanced)
+    saveSplitData(X_validation,y_validation,validation_split_balanced)

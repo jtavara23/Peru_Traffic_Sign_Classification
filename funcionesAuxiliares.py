@@ -45,7 +45,7 @@ def readData(file):
 
 
 # display an image
-def display(img, tipo, mod):
+def display(img, mod, tipo='binary'):
 
     if (mod):
         img = img.reshape(32, 32)
@@ -207,7 +207,7 @@ def plot_conv_weights(w, xs, ys, input_channel=0):
 
 
 #def plot_conv_layer(sess, layer, image,xs,ys):
-def plot_conv_layer(values, xs, ys):
+def plot_conv_layer(w, input_channel=0):
     # Assume layer is a TensorFlow op that outputs a 4-dim tensor
     # which is the output of a convolutional layer,
     # e.g. layer_conv1 or layer_conv2.
@@ -220,9 +220,16 @@ def plot_conv_layer(values, xs, ys):
     # Calculate and retrieve the output values of the layer
     # when inputting that image.
     #values = sess.run(layer, feed_dict=feed_dict)
+    #print(w)
+    # Number of filters used in the conv. layer.
+    w_min = np.min(w)
+    w_max = np.max(w)
 
     # Number of filters used in the conv. layer.
-    num_filters = values.shape[3]
+    num_filters = w.shape[3]
+    print(num_filters)
+    xs = int(num_filters/8)
+    ys = 8
 
     # Create figure with a grid of sub-plots.
     fig, axes = plt.subplots(xs, ys)
@@ -234,10 +241,14 @@ def plot_conv_layer(values, xs, ys):
             # Get the output image of using the i'th filter.
             # See new_conv_layer() for details on the format
             # of this 4-dim tensor.
-            img = values[0, :, :, i]
+            img = w[0, :, :, i]
+            #img = w[:, :, input_channel, i]
 
             # Plot image.
-            ax.imshow(img, interpolation='nearest', cmap='binary')
+            ax.imshow(img, vmin=w_min, vmax=w_max,
+                      interpolation='nearest',#'nearest' | sinc
+                      cmap='binary'# cmap = 'seismic | binary'
+                      )
 
         # Remove ticks from the plot.
         ax.set_xticks([])
@@ -247,6 +258,22 @@ def plot_conv_layer(values, xs, ys):
     # in a single Notebook cell.
     plt.show()
 
+def plot_transfer_values(self, i, images, transfer_values):
+    print("Input image:")
+
+    # Plot the i'th image from the test-set.
+    plt.imshow(images[i], interpolation='nearest')
+    plt.show()
+
+    print("Transfer-values for the image using Inception model:")
+
+    # Transform the transfer-values into an image.
+    img = transfer_values[i]
+    img = img.reshape((32, 64))
+
+    # Plot the image for the transfer-values.
+    plt.imshow(img, interpolation='nearest', cmap='Reds')
+    plt.show()
 
 """
 # Plot with legend as before
@@ -269,3 +296,35 @@ plt.ylabel('Enrollment (%)')
 plt.title('Undergraduate enrollment of women')
 plt.show()
 """
+def plot_transfer_values(self, i, images, transfer_values):
+    print("Input image:")
+
+    # Plot the i'th image from the test-set.
+    plt.imshow(images[i], interpolation='nearest')
+    plt.show()
+
+    print("Transfer-values for the image using Inception model:")
+
+    # Transform the transfer-values into an image.
+    img = transfer_values[i]
+    img = img.reshape((32, 64))
+
+    # Plot the image for the transfer-values.
+    plt.imshow(img, interpolation='nearest', cmap='Reds')
+    plt.show()
+        
+def plot_scatter(self, values, cls, num_classes):
+    # Create a color-map with a different color for each class.
+    import matplotlib.cm as cm
+    cmap = cm.rainbow(np.linspace(0.0, 1.0, num_classes))
+
+    # Get the color for each sample.
+    colors = cmap[cls]
+
+    # Extract the x- and y-values.
+    x = values[:, 0]
+    y = values[:, 1]
+
+    # Plot it.
+    plt.scatter(x, y, color=colors)
+    plt.show()
