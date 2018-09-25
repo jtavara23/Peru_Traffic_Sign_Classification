@@ -36,7 +36,7 @@ def readData(file):
 
     with open(file, mode='rb') as f:
         data = pickle.load(
-            f, encoding='latin1'
+            f#, encoding='latin1' ... doesnt work in ubuntu
         )  #Pickle incompatability of numpy arrays between Python 2 and 3, latin1 seems to work
 
     X_file, y_file = data['features'], data['labels']
