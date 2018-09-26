@@ -33,7 +33,7 @@ NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 
 #--------------FOR BALANCED DATASET-----------------------
 #"""
-rutaDeModelo = 'modelsBalanced/model5/' 
+rutaDeModelo = 'modelsBalanced/model4/' 
 TASA_APRENDIZAJE = 5e-4
 
 NUM_CLASSES = 0  #43
@@ -44,15 +44,17 @@ IMAGE_SHAPE = 0  #(32,32,1)
 BATCH_SIZE = 525
 ITER_PER_EPOCA = 387  # = (203175 / 525)
 
-EPOCS = 1
+EPOCS = 60
 #ITERACIONES_ENTRENAMIENTO: (ITER_PER_EPOCA * EPOCS)
 ITERACIONES_ENTRENAMIENTO = ITER_PER_EPOCA * EPOCS
 
-CHKP_GUARDAR_MODELO = ITER_PER_EPOCA
+CHKP_GUARDAR_MODELO = ITER_PER_EPOCA * 5
 CHKP_REVISAR_PROGRESO = 129
 
 LEARNING_DECAY = True
 L2_REG = True
+L2_lambda = 0.0001
+DECAY_RATE = 0.99#(the smaller the lower to learn)
 #"""
 #-----------------------------------------------------------
 """#--------------FOR 10 TIMES DATASET-----------------------
@@ -194,8 +196,8 @@ def capa_fc(nombre, entrada, num_inputs, num_outputs, use_relu=True):
     return layer, pesos
 
 
-def printArquitecture(tam_filtro,num_filtro,dropout_conv,fc1_inputs,fc2_inputs,dropout_fc1, L2_lambda):
-    print("=================== DATA ====================")
+def printArquitecture(tam_filtro,num_filtro,dropout_conv,fc1_inputs,fc2_inputs,dropout_fc1):
+    print("=================== DATA per {} epocs ====================".format(EPOCS))
     print("            Training set: {} examples".format(NUM_TRAIN))
     print("          Validation set: {} examples".format(NUM_TEST))
     print("              Batch size: {}".format(BATCH_SIZE))
@@ -211,7 +213,10 @@ def printArquitecture(tam_filtro,num_filtro,dropout_conv,fc1_inputs,fc2_inputs,d
     print(" %-*s %-*s %-*s %-*s" % (10, "Layer 4", 10, "FC", 8, str(fc1_inputs), 15, str(dropout_fc1)))
     print(" %-*s %-*s %-*s %-*s" % (10, "Layer 5", 10, "FC", 8, str(fc2_inputs), 15, str("--")))    
     print("---------------- PARAMETERS -----------------")
-    print("     Learning rate decay: " + ("Enabled" if LEARNING_DECAY else "Disabled"))
+    if(LEARNING_DECAY):
+        print("       Learning rate decay: " + ("Enabled (Decay rate = {})".format(DECAY_RATE)))
+    else:
+        print("       Learning rate decay: Disabled")
     print("           Learning rate: {}".format(TASA_APRENDIZAJE))
     print("               OPTIMIZER: ADAM Optimizer")
     if(L2_REG):
@@ -253,7 +258,7 @@ def create_cnn():
                               lambda: tf.nn.dropout(capa_conv1, keep_prob=dropout_conv1),
                               lambda: capa_conv1)
 
-    tam_filtro2 = 5
+    tam_filtro2 = 3
     num_filtro2 = 64
     dropout_conv2 = 0.7
     capa_conv2, pesos_conv2,nopool2 = conv_layer(
@@ -267,7 +272,7 @@ def create_cnn():
                               lambda: tf.nn.dropout(capa_conv2, keep_prob=dropout_conv2),
                               lambda: capa_conv2)
 
-    tam_filtro3 = 7
+    tam_filtro3 = 5
     num_filtro3 = 128
     dropout_conv3 = 0.6
     capa_conv3, pesos_conv3,nopool3 = conv_layer(
@@ -331,20 +336,20 @@ def create_cnn():
 
     #--------------------------------------------------------------------------
     with tf.name_scope("Regular_Loss"):
-        #softmax_cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=capa_fc2, labels=y_deseada)
+        #softmax_cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+        #    logits=capa_fc2, labels=y_deseada)        
         softmax_cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(
             logits=capa_fc2, labels=y_deseada)
         
         cross_entropy_mean = tf.reduce_mean(softmax_cross_entropy, name="error")
         tf.summary.scalar('cross_entropy', cross_entropy_mean)
     if(L2_REG):
-    with tf.name_scope("L2_Regularization_Method"):
-        regularizers = (tf.nn.l2_loss(pesos_conv1) + tf.nn.l2_loss(pesos_conv2) +
-                        tf.nn.l2_loss(pesos_conv3) + tf.nn.l2_loss(pesos_fc1) +
-                        tf.nn.l2_loss(pesos_fc2))
-        L2_lambda = 0.0001
-        error =  cross_entropy_mean + L2_lambda * regularizers
-        tf.summary.scalar('error_Acc', error)
+        with tf.name_scope("L2_Regularization_Method"):
+            regularizers = (tf.nn.l2_loss(pesos_conv1) + tf.nn.l2_loss(pesos_conv2) +
+                            tf.nn.l2_loss(pesos_conv3) + tf.nn.l2_loss(pesos_fc1) +
+                            tf.nn.l2_loss(pesos_fc2))
+            error =  cross_entropy_mean + L2_lambda * regularizers
+            tf.summary.scalar('error_Acc', error)
     else:
         error = cross_entropy_mean
     #---------------------------------------------------------------------------
@@ -354,13 +359,13 @@ def create_cnn():
         iterac_entren = tf.Variable(0, name='iterac_entren', trainable=False)
         #A las 15 iteraciones se cambio el (iterperepoca *5) -> (iterperepoca)
         if LEARNING_DECAY:
-            lr = tf.train.exponential_decay(TASA_APRENDIZAJE, iterac_entren, ITER_PER_EPOCA, 0.99, staircase=True, name='ExponentialDecay')
+            lr = tf.train.exponential_decay(TASA_APRENDIZAJE, iterac_entren, ITER_PER_EPOCA, DECAY_RATE, staircase=True, name='ExponentialDecay')
             tf.summary.scalar('learning_rate_decay',lr)
         else:
             lr = TASA_APRENDIZAJE
             tf.summary.scalar('learning_rate',lr)
         #optimizador = tf.train.AdamOptimizer(TASA_APRENDIZAJE).minimize(error, global_step=iterac_entren)
-            optimizador = tf.train.AdamOptimizer(lr).minimize(error, global_step=iterac_entren)
+        optimizador = tf.train.AdamOptimizer(lr).minimize(error, global_step=iterac_entren)
     
     with tf.name_scope("Evaluacion"):
         # evaluacion
@@ -377,7 +382,7 @@ def create_cnn():
     dropout_conv = [dropout_conv1,dropout_conv2,dropout_conv3]
     internal_layers = [capa_conv1, capa_conv2,capa_conv3, nopool1, nopool2, nopool3,capa_fc1,capa_fc2]
 
-    printArquitecture(tam_filtro,num_filtro,dropout_conv,fc1_inputs,fc2_inputs,dropout_fc1, L2_lambda)
+    printArquitecture(tam_filtro,num_filtro,dropout_conv,fc1_inputs,fc2_inputs,dropout_fc1)
 
 
     return resumen, entradas, y_deseada, is_training, iterac_entren, optimizador, acierto, error, predictor,internal_layers
@@ -386,8 +391,8 @@ def create_cnn():
 #===============================================================================================
 
 def print_write_validationSet(i, sess, resumen, acierto, feed_dictx, evalua_writer):
-    [resu, aciertos_eval] = sess.run([resumen, acierto], feed_dict=feed_dictx)
-    evalua_writer.add_summary(resu, i)
+    [res, aciertos_eval] = sess.run([resumen,acierto], feed_dict=feed_dictx)
+    evalua_writer.add_summary(res, i)
     print('En la iteracion %d:'%(i+1))
     print(('Acc. Valid Set => %.4f \n' %(aciertos_eval)))
 
@@ -475,12 +480,11 @@ if __name__ == "__main__":
     print("Ultimo modelo en la iteracion: ", ultima_iteracion)
 
     #showLayersForImage(imagenes_entrenam[20], internal_layers, entradas)
-    #"""    
+     
     entren_writer = tf.summary.FileWriter(rutaDeModelo + 'entrenamiento',
                                           sess.graph)
     #entren_writer.add_graph(sess.graph)
-    evalua_writer = tf.summary.FileWriter(rutaDeModelo + 'evaluacion',
-                                          sess.graph)
+    evalua_writer = tf.summary.FileWriter(rutaDeModelo + 'evaluacion')#you don want the the graph
     epocas_completadas = 0
     indice_en_epoca = 0
 
@@ -504,11 +508,12 @@ if __name__ == "__main__":
             })
 
         entren_writer.add_summary(resu, i)
-
         avg_loss += err
         avg_acc += acc
+
         # Observar el progreso cada 'CHKP_REVISAR_PROGRESO' iteraciones
         if (i + 1) % CHKP_REVISAR_PROGRESO == 0:
+            imagenes_eval, clases_eval = shuffle(imagenes_eval, clases_eval)
             print(
                 ('Time in %d iteraciones: %s ' %
                  (i + 1 - ultima_iteracion,
@@ -519,13 +524,12 @@ if __name__ == "__main__":
             print_write_trainSet(i, avg_acc , avg_loss)
             avg_loss = avg_acc = 0.
             #--------------------------------------------------------------
-            imagenes_eval, clases_eval = shuffle(imagenes_eval, clases_eval)
             feed_dictx = {
                 entradas: imagenes_eval[:5000],
                 y_deseada: clases_eval[:5000],
                 is_training: False#dont use dropout in Testing
             }
-            print_write_validationSet(i,sess, resumen, acierto, feed_dictx, evalua_writer)
+            print_write_validationSet(i, sess,resumen, acierto, feed_dictx, evalua_writer)
             #--------------------------------------------------------------
 
         #Crear 'punto de control' cuando se llego a las CHKP_GUARDAR_MODELO iteraciones

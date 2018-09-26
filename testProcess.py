@@ -9,7 +9,7 @@ import math
 import os
 import datetime
 #from keras.backend import manual_variable_initialization as ke
-
+#tensorboard --logdir modelsBalanced/model1/
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 np.set_printoptions(threshold=np.nan)
 
@@ -19,10 +19,10 @@ NOMBRE_TENSOR_ENTRADA = 'inputX'
 NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 NOMBRE_PROBABILIDAD = 'mantener_probabilidad'
 
-rutaDeModelo = 'modelsBalanced/model4/'
+rutaDeModelo = 'modelsBalanced/model5/'
 #rutaDeModelo = 'models10extend/'
 
-lastModelName = 'model-3870.meta'
+lastModelName = 'model-19350.meta'
 
 test_file = '../signals_database/traffic-signs-data/test_2Processed.p'
 
@@ -74,7 +74,7 @@ def procesamiento(X, y, type):
 
 #63150
 def writeResults(msg, test_file):
-    outFile = open(rutaDeModelo+"LogtestResult.log", "a")
+    outFile = open(rutaDeModelo+"logtestResult.log", "a")
     outFile.write(repr(tf.train.latest_checkpoint(rutaDeModelo + '.')) + "\n")
     outFile.write(test_file + "\n")
     outFile.write(msg)
