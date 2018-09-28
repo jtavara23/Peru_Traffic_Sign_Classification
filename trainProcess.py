@@ -33,8 +33,8 @@ NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 
 #--------------FOR BALANCED DATASET-----------------------
 #"""
-rutaDeModelo = 'modelsBalanced/model4/' 
-TASA_APRENDIZAJE = 5e-4
+rutaDeModelo = 'modelsBalanced/model7/'
+TASA_APRENDIZAJE = 1e-4
 
 NUM_CLASSES = 0  #43
 NUM_TRAIN = 0  #270900 *0.75 = 203175
@@ -44,7 +44,7 @@ IMAGE_SHAPE = 0  #(32,32,1)
 BATCH_SIZE = 525
 ITER_PER_EPOCA = 387  # = (203175 / 525)
 
-EPOCS = 60
+EPOCS = 15
 #ITERACIONES_ENTRENAMIENTO: (ITER_PER_EPOCA * EPOCS)
 ITERACIONES_ENTRENAMIENTO = ITER_PER_EPOCA * EPOCS
 
@@ -55,12 +55,13 @@ LEARNING_DECAY = True
 L2_REG = True
 L2_lambda = 0.0001
 DECAY_RATE = 0.99#(the smaller the lower to learn)
+fourLayers = True
 #"""
 #-----------------------------------------------------------
 """#--------------FOR 10 TIMES DATASET-----------------------
 rutaDeModelo = 'models10extend/' #with same kernels size
 
-TASA_APRENDIZAJE = 5e-4 
+TASA_APRENDIZAJE = 5e-4
 
 NUM_CLASSES = 0  #43
 NUM_TRAIN = 0  #698918 *0.75 = 524188
@@ -201,17 +202,16 @@ def printArquitecture(tam_filtro,num_filtro,dropout_conv,fc1_inputs,fc2_inputs,d
     print("            Training set: {} examples".format(NUM_TRAIN))
     print("          Validation set: {} examples".format(NUM_TEST))
     print("              Batch size: {}".format(BATCH_SIZE))
-    print("       Number of classes: {}".format(NUM_CLASSES)) 
+    print("       Number of classes: {}".format(NUM_CLASSES))
     print("        Image data shape: {}".format(IMAGE_SHAPE))
 
     print("=================== MODEL ===================")
-    print("--------------- ARCHITECTURE ----------------")  
-    print(" %-*s %-*s %-*s %-*s" % (10, "", 10, "Type", 8, "Size", 15, "Dropout (keep p)"))    
-    print(" %-*s %-*s %-*s %-*s" % (10, "Layer 1", 10, "{}x{} Conv".format(tam_filtro[0], tam_filtro[0]), 8, str(num_filtro[0]), 15, str(dropout_conv[0])))    
-    print(" %-*s %-*s %-*s %-*s" % (10, "Layer 2", 10, "{}x{} Conv".format(tam_filtro[1], tam_filtro[1]), 8, str(num_filtro[1]), 15, str(dropout_conv[1])))    
-    print(" %-*s %-*s %-*s %-*s" % (10, "Layer 3", 10, "{}x{} Conv".format(tam_filtro[2], tam_filtro[2]), 8, str(num_filtro[2]), 15, str(dropout_conv[2])))    
+    print("--------------- ARCHITECTURE ----------------")
+    print(" %-*s %-*s %-*s %-*s" % (10, "", 10, "Type", 8, "Size", 15, "Dropout (keep p)"))
+    for i in range(0, len(tam_filtro)):
+        print(" %-*s %-*s %-*s %-*s" % (10, "Layer {}", 10, "{}x{} Conv".format(i+1,tam_filtro[i], tam_filtro[i]), 8, str(num_filtro[i]), 15, str(dropout_conv[i])))
     print(" %-*s %-*s %-*s %-*s" % (10, "Layer 4", 10, "FC", 8, str(fc1_inputs), 15, str(dropout_fc1)))
-    print(" %-*s %-*s %-*s %-*s" % (10, "Layer 5", 10, "FC", 8, str(fc2_inputs), 15, str("--")))    
+    print(" %-*s %-*s %-*s %-*s" % (10, "Layer 5", 10, "FC", 8, str(fc2_inputs), 15, str("--")))
     print("---------------- PARAMETERS -----------------")
     if(LEARNING_DECAY):
         print("       Learning rate decay: " + ("Enabled (Decay rate = {})".format(DECAY_RATE)))
@@ -258,7 +258,7 @@ def create_cnn():
                               lambda: tf.nn.dropout(capa_conv1, keep_prob=dropout_conv1),
                               lambda: capa_conv1)
 
-    tam_filtro2 = 3
+    tam_filtro2 = 5
     num_filtro2 = 64
     dropout_conv2 = 0.7
     capa_conv2, pesos_conv2,nopool2 = conv_layer(
@@ -285,20 +285,44 @@ def create_cnn():
     capa_conv3_drop = tf.cond(is_training,
                               lambda: tf.nn.dropout(capa_conv3, keep_prob=dropout_conv3),
                               lambda: capa_conv3)
+    if(fourLayers):
+        tam_filtro4 = 7
+        num_filtro4 = 128
+        dropout_conv4 = 0.6
+        capa_conv4, pesos_conv4,nopool4 = conv_layer(
+            nombre="convolucion4",
+            entrada=capa_conv3_drop,
+            num_inp_channels=num_filtro3,
+            filter_size=tam_filtro4,
+            num_filters=num_filtro4,
+            use_pooling=True)
+        capa_conv4_drop = tf.cond(is_training,
+                                lambda: tf.nn.dropout(capa_conv4, keep_prob=dropout_conv4),
+                                lambda: capa_conv4)
 
     capa_conv1_drop = doPool(capa_conv1_drop, size=4)
     print( "after pooling:capa_conv1_drop: ",capa_conv1_drop.get_shape(),"\n***********\n")
     capa_conv2_drop = doPool(capa_conv2_drop, size=2)
     print("after pooling:capa_conv2_drop: ",capa_conv2_drop.get_shape(),"\n***********\n")
 
+    if(fourLayers):
+        capa_conv3_drop = doPool(capa_conv3_drop, size=1)
+        print("after pooling:capa_conv3_drop: ",capa_conv3_drop.get_shape(),"\n***********\n")
+        layer_flat4, num_fc_layers4 = flatten_layer(capa_conv4_drop)
+
     layer_flat1, num_fc_layers1 = flatten_layer(capa_conv1_drop)
     layer_flat2, num_fc_layers2 = flatten_layer(capa_conv2_drop)
     layer_flat3, num_fc_layers3 = flatten_layer(capa_conv3_drop)
-    print("NUM FC LAYER:",num_fc_layers1,num_fc_layers2,num_fc_layers3 )
-    
-    layer_flat = tf.concat([layer_flat1, layer_flat2, layer_flat3],1)  #(?, 7168)
+
+    if(fourLayers):
+        print("NUM FC LAYER:",num_fc_layers1,num_fc_layers2,num_fc_layers3, num_fc_layers4 )
+        layer_flat = tf.concat([layer_flat1, layer_flat2, layer_flat3, layer_flat4],1)  #(?, NUm)
+        num_fc_layers = num_fc_layers1 + num_fc_layers2 + num_fc_layers3+num_fc_layers4  # (NUm)
+    else:
+        print("NUM FC LAYER:",num_fc_layers1,num_fc_layers2,num_fc_layers3 )
+        layer_flat = tf.concat([layer_flat1, layer_flat2, layer_flat3],1)  #(?, NUm)
+        num_fc_layers = num_fc_layers1 + num_fc_layers2 + num_fc_layers3  # (NUm)
     print( "1:",layer_flat.get_shape())
-    num_fc_layers = num_fc_layers1 + num_fc_layers2 + num_fc_layers3  # (7168)
     print( "2:",num_fc_layers)
     #"""
 
@@ -337,10 +361,10 @@ def create_cnn():
     #--------------------------------------------------------------------------
     with tf.name_scope("Regular_Loss"):
         #softmax_cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
-        #    logits=capa_fc2, labels=y_deseada)        
+        #    logits=capa_fc2, labels=y_deseada)
         softmax_cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(
             logits=capa_fc2, labels=y_deseada)
-        
+
         cross_entropy_mean = tf.reduce_mean(softmax_cross_entropy, name="error")
         tf.summary.scalar('cross_entropy', cross_entropy_mean)
     if(L2_REG):
@@ -366,7 +390,7 @@ def create_cnn():
             tf.summary.scalar('learning_rate',lr)
         #optimizador = tf.train.AdamOptimizer(TASA_APRENDIZAJE).minimize(error, global_step=iterac_entren)
         optimizador = tf.train.AdamOptimizer(lr).minimize(error, global_step=iterac_entren)
-    
+
     with tf.name_scope("Evaluacion"):
         # evaluacion
         prediccion_correcta = tf.equal(
@@ -376,11 +400,16 @@ def create_cnn():
         tf.summary.scalar("acierto", acierto)
 
     resumen = tf.summary.merge_all()
-    
-    tam_filtro = [tam_filtro1,tam_filtro2,tam_filtro3]
-    num_filtro = [num_filtro1,num_filtro2,num_filtro3]
-    dropout_conv = [dropout_conv1,dropout_conv2,dropout_conv3]
-    internal_layers = [capa_conv1, capa_conv2,capa_conv3, nopool1, nopool2, nopool3,capa_fc1,capa_fc2]
+    if(fourLayers):
+        tam_filtro = [tam_filtro1,tam_filtro2,tam_filtro3,tam_filtro4]
+        num_filtro = [num_filtro1,num_filtro2,num_filtro3,num_filtro4]
+        dropout_conv = [dropout_conv1,dropout_conv2,dropout_conv3,dropout_conv4]
+        internal_layers = [capa_conv1, capa_conv2,capa_conv3,capa_conv4, nopool1, nopool2, nopool3,nopool4,capa_fc1,capa_fc2]
+    else:
+        tam_filtro = [tam_filtro1,tam_filtro2,tam_filtro3]
+        num_filtro = [num_filtro1,num_filtro2,num_filtro3]
+        dropout_conv = [dropout_conv1,dropout_conv2,dropout_conv3]
+        internal_layers = [capa_conv1, capa_conv2,capa_conv3, nopool1, nopool2, nopool3,capa_fc1,capa_fc2]
 
     printArquitecture(tam_filtro,num_filtro,dropout_conv,fc1_inputs,fc2_inputs,dropout_fc1)
 
@@ -412,18 +441,18 @@ def saveModel(sess, i , rutaDeModelo, saver):
 
 def showLayersForImage(imageConvol, internal_layers,entradas):
     #cv2.imwrite('zexample1.png',X_train[200])
-    
+
     #imageConvol = (imageConvol * 255.).astype(np.float32)
     #imageConvol = 0.299 * imageConvol[ :, :, 0] + 0.587 * imageConvol[ :, :, 1] + 0.114 * imageConvol[ :, :, 2]
     #imageConvol = imageConvol.reshape(imageConvol.shape + (1, ))
     print( imageConvol.shape)
     display(imageConvol,True)
-    
+
     feed_dictcon = {entradas: [imageConvol], is_training: False}
     #for i in range(6,7):
     #    valuesConv = sess.run(internal_layers[i], feed_dict=feed_dictcon)
     #    plot_conv_layer(valuesConv)
-    
+
 
 if __name__ == "__main__":
 
@@ -457,7 +486,6 @@ if __name__ == "__main__":
         X_validation, y_validation)
 
     #--------------------------------CREACION DE LA RED------------------------------------------------
-    #"""
     print("Inicio de creacion de la red")
     tf.reset_default_graph()
     sess = tf.Session()
@@ -480,7 +508,7 @@ if __name__ == "__main__":
     print("Ultimo modelo en la iteracion: ", ultima_iteracion)
 
     #showLayersForImage(imagenes_entrenam[20], internal_layers, entradas)
-     
+    #"""
     entren_writer = tf.summary.FileWriter(rutaDeModelo + 'entrenamiento',
                                           sess.graph)
     #entren_writer.add_graph(sess.graph)
@@ -491,7 +519,7 @@ if __name__ == "__main__":
     clases_calc = np.zeros(shape=NUM_TEST, dtype=np.int)
 
     comienzo_time = time.time()
-    
+
     avg_loss = avg_acc = 0.
     #Desde la ultima iteracion hasta el ITERACIONES_ENTRENAMIENTO dado
     for i in trange(ultima_iteracion, ITERACIONES_ENTRENAMIENTO):
