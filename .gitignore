@@ -2,6 +2,8 @@
 __pycache__
 *.ini
 *.jpg
+*.png
+*.jpeg
 *.log
 /modelsBalanced
 /models10extend
