@@ -446,7 +446,7 @@ def showLayersForImage(imageConvol, internal_layers,entradas):
     #imageConvol = 0.299 * imageConvol[ :, :, 0] + 0.587 * imageConvol[ :, :, 1] + 0.114 * imageConvol[ :, :, 2]
     #imageConvol = imageConvol.reshape(imageConvol.shape + (1, ))
     print( imageConvol.shape)
-    display(imageConvol,True)
+    display(imageConvol,True,32)
 
     feed_dictcon = {entradas: [imageConvol], is_training: False}
     #for i in range(6,7):

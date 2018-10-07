@@ -12,7 +12,7 @@ IMAGE_TO_DISPLAY = 0
 train_file = '../signals_database/traffic-signs-data/train_4ProcessedBalanced.p'
 X_train, y_train = readData(train_file)
 imagenconv = X_train[IMAGE_TO_DISPLAY]
-#display(imagenconv, True)
+#display(imagenconv, True, 32)
 #"""
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
@@ -32,7 +32,7 @@ with tf.Session() as sess:
     #plot_conv_weights(sess.run(all_vars[0]),8,4,0)
     #plot_conv_weights(sess.run(all_vars[2]),8,8,0)
     #plot_conv_layer(sess.run(all_vars[2]),8,8)
-    
+
 
 #"""
 """0 <tf.Variable 'convolucion1/W:0' shape=(3, 3, 1, 32) dtype=float32_ref>

@@ -45,10 +45,10 @@ def readData(file):
 
 
 # display an image
-def display(img, mod, tipo='binary'):
+def display(img, mod, tam, tipo='binary'):
 
     if (mod):
-        img = img.reshape(32, 32)
+        img = img.reshape(tam, tam)
     plt.axis('off')
     #plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), cmap='binary')
     plt.imshow(img, cmap=tipo)  #deafult was binary
@@ -256,75 +256,4 @@ def plot_conv_layer(w, input_channel=0):
 
     # Ensure the plot is shown correctly with multiple plots
     # in a single Notebook cell.
-    plt.show()
-
-def plot_transfer_values(self, i, images, transfer_values):
-    print("Input image:")
-
-    # Plot the i'th image from the test-set.
-    plt.imshow(images[i], interpolation='nearest')
-    plt.show()
-
-    print("Transfer-values for the image using Inception model:")
-
-    # Transform the transfer-values into an image.
-    img = transfer_values[i]
-    img = img.reshape((32, 64))
-
-    # Plot the image for the transfer-values.
-    plt.imshow(img, interpolation='nearest', cmap='Reds')
-    plt.show()
-
-"""
-# Plot with legend as before
-plt.plot(year, computer_science, color='red', label='Computer Science') 
-plt.plot(year, physical_sciences, color='blue', label='Physical Sciences')
-plt.legend(loc='lower right')
-
-# Compute the maximum enrollment of women in Computer Science: cs_max
-cs_max = computer_science.max()
-
-# Calculate the year in which there was maximum enrollment of women in Computer Science: yr_max
-yr_max = year[computer_science.argmax()]
-
-# Add a black arrow annotation
-plt.annotate('Maximum', xy=(yr_max, cs_max), xytext=(yr_max+5, cs_max+5), arrowprops=dict(facecolor='black'))
-
-# Add axis labels and title
-plt.xlabel('Year')
-plt.ylabel('Enrollment (%)')
-plt.title('Undergraduate enrollment of women')
-plt.show()
-"""
-def plot_transfer_values(self, i, images, transfer_values):
-    print("Input image:")
-
-    # Plot the i'th image from the test-set.
-    plt.imshow(images[i], interpolation='nearest')
-    plt.show()
-
-    print("Transfer-values for the image using Inception model:")
-
-    # Transform the transfer-values into an image.
-    img = transfer_values[i]
-    img = img.reshape((32, 64))
-
-    # Plot the image for the transfer-values.
-    plt.imshow(img, interpolation='nearest', cmap='Reds')
-    plt.show()
-        
-def plot_scatter(self, values, cls, num_classes):
-    # Create a color-map with a different color for each class.
-    import matplotlib.cm as cm
-    cmap = cm.rainbow(np.linspace(0.0, 1.0, num_classes))
-
-    # Get the color for each sample.
-    colors = cmap[cls]
-
-    # Extract the x- and y-values.
-    x = values[:, 0]
-    y = values[:, 1]
-
-    # Plot it.
-    plt.scatter(x, y, color=colors)
     plt.show()
