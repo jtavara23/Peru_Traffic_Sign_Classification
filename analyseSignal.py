@@ -9,6 +9,7 @@ from funcionesAuxiliares import readData, plot_example_errors, plot_confusion_ma
 import math
 import os
 import sys
+from skimage import exposure
 #from keras.backend import manual_variable_initialization as ke
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -18,9 +19,10 @@ BATCH_SIZE = 421  # 421
 NOMBRE_TENSOR_ENTRADA = 'inputX'
 NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 NOMBRE_PROBABILIDAD = 'mantener_probabilidad'
-MODEL_PATH = 'D:/signalsWindows/models5/'
+MODEL_PATH = 'models10extend/model1/'
+lastModelName = 'model-61760.meta'
 # important path to extract processed images
-PROCESSED_IMAGES_PATH = "D:/SignalsWindows/imagenes/"
+PROCESSED_IMAGES_PATH = "imagenes/"
 NUM_TEST = 0
 
 
@@ -44,18 +46,19 @@ def procesarIMG(name):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     cv2.imwrite(PROCESSED_IMAGES_PATH + 'b.jpg', img)
 
-    img2 = img
-    img = 0.299 * img[:, :, 0] + 0.587 * img[:, :, 1] + 0.114 * img[:, :, 2]
-    cv2.imwrite(PROCESSED_IMAGES_PATH + 'c.jpg', img)
-    
-    img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
-    cv2.imwrite(PROCESSED_IMAGES_PATH + 'd.jpg', img)
+    #img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    #cv2.imwrite(PROCESSED_IMAGES_PATH + 'd.jpg', img)
 
-    img2 = cv2.adaptiveThreshold(img2,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,1,5,3)
-    cv2.imwrite(PROCESSED_IMAGES_PATH + 'e.jpg',img2) 
+    img = exposure.equalize_adapthist(img)
+    img2 = (img * 255).astype(np.int)
+    cv2.imwrite(PROCESSED_IMAGES_PATH + 'd.jpg',img2)
+
+    img = 0.299 * img[:, :, 0] + 0.587 * img[:, :, 1] + 0.114 * img[:, :, 2]
+    img2 = 0.299 * img2[:, :, 0] + 0.587 * img2[:, :, 1] + 0.114 * img2[:, :, 2]
+    cv2.imwrite(PROCESSED_IMAGES_PATH + 'e.jpg', img2)
 
     np.reshape(img, (1, 32, 32))
-    img = (img / 255.).astype(np.float32)
+    #img = (img / 255.).astype(np.float32) done in CLAHE
     return img
 
 def getSignalName(index):
@@ -66,14 +69,14 @@ def getSignalName(index):
         outData.append(data[1])
     #print('\n'.join(outData[]))
     return outData[index]
-    
+
 
 def runAnalyzer(pathImage):
     print("Running session")
     with tf.Session() as sess:
         # Restore latest checkpoint
         sess.run(tf.global_variables_initializer())
-        saver = tf.train.import_meta_graph(MODEL_PATH + 'model-49296.meta')
+        saver = tf.train.import_meta_graph(MODEL_PATH + lastModelName)
         ult_pto_control = tf.train.latest_checkpoint(MODEL_PATH + '.')
         saver.restore(sess, ult_pto_control)
         print("Modelo restaurado " + ult_pto_control)
@@ -99,11 +102,18 @@ def runAnalyzer(pathImage):
         # Calcula la clase usando el predictor de nuestro modelo
         label_pred = sess.run(predictor, feed_dict=feed_dictx)
         print("Signal: ", label_pred)
+
         # cualquiera es igual
-        #acc= probabilidad.eval(feed_dict = feed_dictx)
-        acc = sess.run(probabilidad, feed_dict=feed_dictx)
+        acc= probabilidad.eval(feed_dict = feed_dictx)
+        #acc = sess.run(probabilidad, feed_dict=feed_dictx)
+
         print("Accuracy: ", acc[0][label_pred])
-        #print(acc) other accuracies
+        results = [(xx,acc[0][xx]) for xx in range(0,43)]
+        #for  xx in range(0,43):
+        #    results[xx] = (xx,acc[0][xx])
+        #    #print("acc["+str(xx)+"]: ",acc[0][xx])
+        results = list(reversed(sorted(results, key=lambda tup:tup[1])))
+        print(results[:5])
         return getSignalName(np.asscalar(label_pred))
 
 

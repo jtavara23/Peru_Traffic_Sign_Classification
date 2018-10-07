@@ -58,8 +58,9 @@ def showImgProc():
 
     # print processed_images
     lista_imagenes = []
+    lista_imagenes.append(Image.open(anaSig.PROCESSED_IMAGES_PATH + "a.jpg"))
     lista_imagenes.append(Image.open(anaSig.PROCESSED_IMAGES_PATH + "b.jpg"))
-    lista_imagenes.append(Image.open(anaSig.PROCESSED_IMAGES_PATH + "c.jpg"))
+    #lista_imagenes.append(Image.open(anaSig.PROCESSED_IMAGES_PATH + "c.jpg"))
     lista_imagenes.append(Image.open(anaSig.PROCESSED_IMAGES_PATH + "d.jpg"))
     lista_imagenes.append(Image.open(anaSig.PROCESSED_IMAGES_PATH + "e.jpg"))
 
