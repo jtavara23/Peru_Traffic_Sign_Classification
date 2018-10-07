@@ -2,7 +2,7 @@
 Thesis' Project
 
 ---------------------------------
-For ubuntu
+For VirtualEnv
 
 sudo apt install python-pip
 pip install virtualenvwrapper
@@ -20,6 +20,9 @@ List envs: du -hs /home/hostname/.virtualenvs/
 
 
 ---------------------------------
-For windows
-install conda
-activate tensor35
+For Anaconda env
+conda remove -n envName --all
+conda info --envs
+conda create -n tensor35 python=3.5 anaconda
+conda activate tensor 35
+conda deactivate
