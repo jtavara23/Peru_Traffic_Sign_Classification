@@ -7,4 +7,5 @@ __pycache__
 *.log
 /modelsBalanced
 /models10extend
+/models_Peru_balanced
 ThesisCode.code-workspace
