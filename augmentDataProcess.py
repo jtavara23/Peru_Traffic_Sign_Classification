@@ -131,9 +131,9 @@ def save_data(file, path):
 def flip_extend(X, y):
     """
     Extends existing images dataset by flipping images of some classes. As some images would still belong
-    to same class after flipping we extend such classes with flipped images. Images of other would toggle 
+    to same class after flipping we extend such classes with flipped images. Images of other would toggle
     between two classes when flipped, so for those we extend existing datasets as well.
-    
+
     Parameters
     ----------
     X       : ndarray
@@ -143,7 +143,7 @@ def flip_extend(X, y):
 
     Returns
     -------
-    A tuple of X and y.    
+    A tuple of X and y.
     """
 
     X_extended = np.empty(
@@ -228,8 +228,8 @@ def doFlip(inFile, outFile):
 #----------------------------------------------------------------------------------------
 class AugmentedSignsBatchIterator(BatchIterator):
     """
-    Iterates over dataset in batches. 
-    Allows images augmentation by randomly rotating, applying projection, 
+    Iterates over dataset in batches.
+    Allows images augmentation by randomly rotating, applying projection,
     adjusting gamma, blurring, adding noize and flipping horizontally.
     """
 
@@ -242,7 +242,7 @@ class AugmentedSignsBatchIterator(BatchIterator):
         """
         Initialises an instance with usual iterating settings, as well as data augmentation coverage
         and augmentation intensity.
-        
+
         Parameters
         ----------
         batch_size:
@@ -256,7 +256,7 @@ class AugmentedSignsBatchIterator(BatchIterator):
                     Defines data augmentation coverage.
         intensity :
                     Augmentation intensity, should be in a [0, 1] range.
-        
+
         Returns
         -------
         New batch iterator instance.
@@ -326,7 +326,7 @@ class AugmentedSignsBatchIterator(BatchIterator):
     ########### Image Rotate Function ################
     def rotate(self, Xb, batch_size):
         """
-        Applies random rotation in a defined degrees range to a random subset of images. 
+        Applies random rotation in a defined degrees range to a random subset of images.
         Range itself is subject to scaling depending on augmentation intensity.
         """
         for i in np.random.choice(
@@ -382,7 +382,7 @@ def extend_balancing_classes(X, y, aug_intensity=0.5, isBalanced=False):
     """
     Extends dataset by duplicating existing images while applying data augmentation pipeline.
     Number of generated examples for each class may be provided in `counts`.
-    
+
     Parameters
     ----------
     X             : ndarray
@@ -393,10 +393,10 @@ def extend_balancing_classes(X, y, aug_intensity=0.5, isBalanced=False):
                     Intensity of augmentation, must be in [0, 1] range.
     isBalanced        :
                     to know what would be the augment data factor
-                    
+
     Returns
     -------
-    A tuple of X and y.    
+    A tuple of X and y.
     """
 
     class_numbers, class_counts = np.unique(y, return_counts=True)
@@ -495,7 +495,7 @@ def doExtended(inputFile, balanced, isTraining=True):
 
     new_data = {'features': X_data_extended, 'labels': y_data_extended}
     if isTraining:
-        save_data(new_data, train_extended_file)
+        save_data(new_data, train_extended_file)# or could be train_extended_balanced_file
         plot_histograms(
             'Class Distribution  New Flipped Training Data vs New Extended Training Data',
             CLASS_TYPES, class_counts1, class_counts2, 'b',
@@ -540,7 +540,7 @@ def convertToGrayScale(inputFile, outputFile):
     """
     Performs feature scaling, one-hot encoding of labels and shuffles the data if labels are provided.
     Assumes original dataset is sorted by labels.
-    
+
     Parameters
     ----------
     X                : ndarray
@@ -549,7 +549,7 @@ def convertToGrayScale(inputFile, outputFile):
                        Dataset labels in index form.
     Returns
     -------
-    A tuple of X and y.    
+    A tuple of X and y.
     """
     X, y, _ = readOriginal(inputFile)
 
@@ -788,7 +788,8 @@ def saveSplitData(X_data,y_data,targetFile):
 if __name__ == "__main__":
     print("Finish importing packages")
 
-    #X_train, y_train, _ = readOriginal(train_file)
+    X_train, y_train, _ = readOriginal(train_file)
+    print( X_train[0])
     #X_train, y_train, _ = readOriginal(train_processed_balanced_file)
     #showHistogram(train_file,'Class Distribution on Initial Data')
     #plot_some_examples(X_train, y_train,5)
@@ -856,10 +857,12 @@ if __name__ == "__main__":
     #    CLASS_TYPES, class_counts1, class_counts2, 'r',
     #    'c')
     #
+    """
     train_split_balanced = '../signals_database/traffic-signs-data/train5_split_balanced.p'
     validation_split_balanced = '../signals_database/traffic-signs-data/validation5_split_balanced.p'
     X_train, y_train = readData(train_processed_balanced_file)
-    
-    X_train, X_validation, y_train, y_validation = train_test_split(X_train, y_train, test_size=0.25) 
+
+    X_train, X_validation, y_train, y_validation = train_test_split(X_train, y_train, test_size=0.25)
     saveSplitData(X_train,y_train,train_split_balanced)
     saveSplitData(X_validation,y_validation,validation_split_balanced)
+    """
