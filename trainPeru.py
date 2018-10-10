@@ -33,7 +33,7 @@ NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 
 #--------------FOR BALANCED DATASET-----------------------
 #"""
-rutaDeModelo = 'models_Peru_balanced/model1/'
+rutaDeModelo = 'models_Peru/model1/'
 TASA_APRENDIZAJE = 1e-4
 
 NUM_CLASSES = 0  #43
@@ -44,7 +44,7 @@ IMAGE_SHAPE = 0  #(60,60,1)
 BATCH_SIZE = 305
 ITER_PER_EPOCA = 77  # = (23485 / 427)
 
-EPOCS = 30
+EPOCS = 100
 #ITERACIONES_ENTRENAMIENTO: (ITER_PER_EPOCA * EPOCS)
 ITERACIONES_ENTRENAMIENTO = ITER_PER_EPOCA * EPOCS
 
