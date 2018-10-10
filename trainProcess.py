@@ -209,7 +209,7 @@ def printArquitecture(tam_filtro,num_filtro,dropout_conv,fc1_inputs,fc2_inputs,d
     print("--------------- ARCHITECTURE ----------------")
     print(" %-*s %-*s %-*s %-*s" % (10, "", 10, "Type", 8, "Size", 15, "Dropout (keep p)"))
     for i in range(0, len(tam_filtro)):
-        print(" %-*s %-*s %-*s %-*s" % (10, "Layer {}", 10, "{}x{} Conv".format(i+1,tam_filtro[i], tam_filtro[i]), 8, str(num_filtro[i]), 15, str(dropout_conv[i])))
+        print(" %-*s %-*s %-*s %-*s" % (10, "Layer "+str(i+1), 10, str(tam_filtro[i])+"x"+str(tam_filtro[i])+ "Conv", 8, str(num_filtro[i]), 15, str(dropout_conv[i])))
     print(" %-*s %-*s %-*s %-*s" % (10, "Layer 4", 10, "FC", 8, str(fc1_inputs), 15, str(dropout_fc1)))
     print(" %-*s %-*s %-*s %-*s" % (10, "Layer 5", 10, "FC", 8, str(fc2_inputs), 15, str("--")))
     print("---------------- PARAMETERS -----------------")
