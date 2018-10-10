@@ -14,20 +14,20 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 np.set_printoptions(threshold=np.nan)
 
 NUM_TEST = 0
-BATCH_SIZE = 2000
+BATCH_SIZE = 1958#2000
 NOMBRE_TENSOR_ENTRADA = 'inputX'
 NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 NOMBRE_PROBABILIDAD = 'mantener_probabilidad'
 
-rutaDeModelo = 'modelsBalanced/model5/'
+#rutaDeModelo = 'modelsBalanced/model5/'
 #rutaDeModelo = 'models10extend/'
+rutaDeModelo = 'models_Peru_Balanced/model1/'
 
-lastModelName = 'model-19350.meta'
+lastModelName = 'model-7700.meta'
 
-test_file = '../signals_database/traffic-signs-data/test_2Processed.p'
-
+#test_file = '../signals_database/traffic-signs-data/test_2Processed.p'
 #test_file = '../signals_database/traffic-signs-data/test_5ExtendedProcessed.p'
-
+test_file = '../signals_database/peru-signs-data/pickleFiles/validation5_split_50.p'
 
 def procesamiento(X, y, type):
     """
@@ -54,7 +54,7 @@ def procesamiento(X, y, type):
     # 1 => [0 1 0 0 0 0 0 0 0 0....0 0 0 0]
     # ...
     # 43 => [0 0 0 0 0 0 0 0 0 0....0 0 0 1]
-    y_onehot = np.zeros((y.shape[0], 43))
+    y_onehot = np.zeros((y.shape[0], 7)) #change to 7 when analyzing PERU SIGNS
     for i, onehot_label in enumerate(y_onehot):
         onehot_label[y[i]] = 1.0
     y = y_onehot
