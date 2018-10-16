@@ -744,7 +744,7 @@ def plot_histograms(titulo, CLASS_TYPES, class_counts1, class_counts2, color1,
     ax.bar(CLASS_TYPES, class_counts1, width, color=color1, label='-Ymin')
     ax.bar(
         CLASS_TYPES + width, class_counts2, width, color=color2, label='Ymax')
-    ax.set_xlabel('Image type')
+    ax.set_xlabel('Categoria')
     ax.set_xticks(CLASS_TYPES + width / 2)
     ax.set_xticklabels(CLASS_TYPES)
     plt.title(titulo)
@@ -755,20 +755,22 @@ def plot_histograms(titulo, CLASS_TYPES, class_counts1, class_counts2, color1,
 def showHistogram(file, title):
     X_train, y_train, class_counts = readOriginal(file)
     # Plot the histogram
-    plt.xlabel('Image Type')
-    plt.ylabel('Number of Images')
-    plt.rcParams["figure.figsize"] = [30, 5]
+    plt.xlabel('Categorias')
+    #plt.xticks( fontsize=6,rotation=45,ha="right",
+    #     rotation_mode="anchor")
+    plt.ylabel('Numero de Imagenes')
+    plt.rcParams["figure.figsize"] = [25, 25]
     axes = plt.gca()
     axes.set_xlim([-1, 43])
-
     plt.bar(
         CLASS_TYPES,
         class_counts,
-        tick_label=CLASS_TYPES,
+        tick_label=CLASS_TYPES,#CLASS_TYPES - signnames
         color='g',
-        width=0.8,
-        align='center')
+        width=0.8
+        )
     plt.title(title)
+    plt.tight_layout()
     plt.show()
 
 
@@ -788,14 +790,14 @@ def saveSplitData(X_data,y_data,targetFile):
 if __name__ == "__main__":
     print("Finish importing packages")
 
-    X_train, y_train, _ = readOriginal(train_file)
-    print( X_train[0])
+   # X_train, y_train, _ = readOriginal(train_file)
+    #print( X_train[0])
     #X_train, y_train, _ = readOriginal(train_processed_balanced_file)
-    #showHistogram(train_file,'Class Distribution on Initial Data')
+    #showHistogram(train_file,'Distribucion de Clases en Dataset Inicial')
     #plot_some_examples(X_train, y_train,5)
 
     #X_test, y_test, _ = readOriginal(test_file)
-    #showHistogram(X_test,'Class Distribution on Test Data')
+    #showHistogram(test_file,'Distribucion de datos en el Dataset de Evaluación')
     #plot_some_examples(X_test, y_test,5)
 
     #--------------------NORMALIZE DATA----1st step-----------------------------------------------------
@@ -814,7 +816,7 @@ if __name__ == "__main__":
     X_train, y_train, class_counts1 = readOriginal(train_normalized_file)
     X_train, y_train, class_counts2 = readOriginal(train_flipped_file)
     plot_histograms(
-        'Class Distribution Original Training data vs New Flipped Training Data',
+        'Distribucion de Clases entre Dataset Original vs Dataset de Imagenes con Rotacion',
         CLASS_TYPES, class_counts1, class_counts2, 'b',
         'r')
     """
@@ -853,7 +855,7 @@ if __name__ == "__main__":
     #X_train, y_train, class_counts2 = readOriginal(train_extended_file)
 
     #plot_histograms(
-    #    'Class Distribution Flipped Training data vs Balanced Training Data',
+    #    'Distribucion de Clases Imagenes Rotodas vs Imagenes Aumentadas Estratificadamente',
     #    CLASS_TYPES, class_counts1, class_counts2, 'r',
     #    'c')
     #
