@@ -34,22 +34,16 @@ CLASS_TYPES = []
 train_file = '../signals_database/peru-signs-data/pickleFiles/trainData.p'  #originally sorted
 test_file = '../signals_database/peru-signs-data/pickleFiles/testData.p'
 signnames = read_csv(
-    "../signals_database/peru-signs-data/pickleFiles/signnames.csv").values[:, 1]
+    "../signals_database/peru-signs-data/pickleFiles/senalnames.csv").values[:, 1]
 
 train_normalized_file = '../signals_database/peru-signs-data/pickleFiles/train_1Normalized.p'  #just with clahe and scale [0,1]
-train_flipped_file = '../signals_database/peru-signs-data/pickleFiles/train_2Flipped.p'#63538 images
-train_extended_balanced_file = '../signals_database/peru-signs-data/pickleFiles/train_3ExtendedBalanced.p' #270900 images
 train_extended_file = '../signals_database/peru-signs-data/pickleFiles/train_3Extended50.p' #698918 images
-train_processed_balanced_file = '../signals_database/peru-signs-data/pickleFiles/train_4ProcessedBalanced.p' # #unsorted and ready for trainingProcess
 train_processed_file = '../signals_database/peru-signs-data/pickleFiles/train_4Processed50.p' # #unsorted and ready for trainingProcess
+train_processed_file_split = '../signals_database/peru-signs-data/pickleFiles/train5_split_50.p'
 
-
-test_normalized_file = '../signals_database/peru-signs-data/pickleFiles/test_1Normalized.p'  # just with clahe and scale [0,1]
-test_processed_file = '../signals_database/peru-signs-data/pickleFiles/test_2Processed.p'  #sorted and ready for testing [not augmented]
-
-test_flipped_file = '../signals_database/peru-signs-data/pickleFiles/test_3Flipped.p'  # from test_normalized_file
-test_extended_file = '../signals_database/peru-signs-data/pickleFiles/test_4Sorted_Extended.p'  #extend the sorted one
-test_processed_extended_file = '../signals_database/peru-signs-data/pickleFiles/test_5ExtendedProcessed.p'  #ready for testingProcess
+validation_test_file_split = '../signals_database/peru-signs-data/pickleFiles/validation_test_5_split_50.p'
+validation_split_file = '../signals_database/peru-signs-data/pickleFiles/validation5_split_50.p'
+test_processed_file = '../signals_database/peru-signs-data/pickleFiles/test_1Processed.p'  #sorted and ready for testing [not augmented]
 
 #======================================================================================================
 # Classes of signs that, when flipped horizontally, should still be classified as the same class
@@ -693,7 +687,7 @@ def showAugmentSamples(file):
     plt.show()
 
 
-def plot_some_examples(X_data, y_data, n_examples, breakAt=5):
+def plot_some_examples(X_data, y_data, n_examples, breakAt=7):
     #[X_data] para mostrar data y [y_data] para analizar indices
     #""" data NEEDS TO BE SORTED in order to work properly!!!!
     global IMAGE_SHAPE
@@ -738,15 +732,14 @@ def plot_histograms(titulo, CLASS_TYPES, class_counts1, class_counts2, color1,
     #Calculate optimal width
     width = np.min(np.diff(CLASS_TYPES)) / 3
     width = 0.35
-
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.bar(CLASS_TYPES, class_counts1, width, color=color1, label='-Ymin')
     ax.bar(
         CLASS_TYPES + width, class_counts2, width, color=color2, label='Ymax')
-    ax.set_xlabel('Image type')
+    ax.set_xlabel('Categorias')
     ax.set_xticks(CLASS_TYPES + width / 2)
-    ax.set_xticklabels(CLASS_TYPES)
+    ax.set_xticklabels(signnames,rotation=25)
     plt.title(titulo)
     plt.show()
     #plt.bar(CLASS_TYPES, class_counts, tick_label=CLASS_TYPES, width=0.8, align='center',  color=color)
@@ -755,18 +748,19 @@ def plot_histograms(titulo, CLASS_TYPES, class_counts1, class_counts2, color1,
 def showHistogram(file, title):
     X_train, y_train, class_counts = readOriginal(file)
     # Plot the histogram
-    plt.xlabel('Image Type')
-    plt.ylabel('Number of Images')
+    plt.xlabel('Categorias')
+    plt.xticks( fontsize=6,rotation=25)
+    plt.ylabel('Numero de Imagenes')
     plt.rcParams["figure.figsize"] = [30, 5]
     axes = plt.gca()
-    axes.set_xlim([-1, 43])
+    axes.set_xlim([-1, 7])
 
     plt.bar(
         CLASS_TYPES,
         class_counts,
-        tick_label=CLASS_TYPES,
+        tick_label=signnames,
         color='g',
-        width=0.8,
+        width=0.7,
         align='center')
     plt.title(title)
     plt.show()
@@ -776,7 +770,7 @@ def plotCmpnNewTestHistograms():
     X_test, y_test, class_counts1 = readOriginal(test_file)
     X_test_extended, y_test_extended, class_counts2 = readOriginal(
         test_processed_extended_file)
-    plot_histograms('Class Distribution across New Extended Test Data',
+    plot_histograms('Distribución de clases a través de datos de prueba ampliados',
                     CLASS_TYPES, class_counts1, class_counts2, 'g', 'm')
 
 def saveSplitData(X_data,y_data,targetFile):
@@ -790,11 +784,11 @@ if __name__ == "__main__":
 
     #X_train, y_train, _ = readOriginal(train_file)
     #X_train, y_train, _ = readOriginal(train_processed_balanced_file)
-    #showHistogram(train_file,'Class Distribution on Initial Data')
+    #showHistogram(train_file,'Distribucion de Clases en Dataset Inicial')
     #plot_some_examples(X_train, y_train,5)
 
     #X_test, y_test, _ = readOriginal(test_file)
-    #showHistogram(X_test,'Class Distribution on Test Data')
+    #showHistogram(X_test,'Distribucion de datos en el Dataset de Evaluación')
     #plot_some_examples(X_test, y_test,5)
 
     #--------------------NORMALIZE DATA----1st step-----------------------------------------------------
@@ -823,37 +817,22 @@ if __name__ == "__main__":
     #convertToGrayScale(test_normalized_file,test_processed_file)#only this was executed 2nd and then the flip
     #-----------------------------------------------------------------------------
 
-    #-------JUST FOR CONFIRMATION ON THE TESTING PHASE-------------------------------
-
-    #doFlip(test_normalized_file, test_flipped_file)
-    #doExtended(test_flipped_file, balanced=False, isTraining=False)
-    #x, y, cc = readOriginal(test_extended_file)
-    #showHistogram(test_extended_file, "extended test file")
-    #plot_some_examples(x, y, 5)
-
-    #convertToGrayScale(test_extended_file, test_processed_extended_file)
-
-    #plotCmpnNewTestHistograms()
     #-----------------------------------------------------------------------------
-    #showFlippledImages()
-    #-----------------------------------------------------------------------------
-    #showHistogram(test_flipped_file, "test flipped")
-    #showAugmentSamples(test_flipped_file)
     #showAugmentSamples(train_normalized_file)
     #-----------------------------------------------------------------------------
-    #X_train, y_train, class_counts1 = readOriginal(train_flipped_file)
+    #X_train, y_train, class_counts1 = readOriginal(train_normalized_file)
     #X_train, y_train, class_counts2 = readOriginal(train_extended_file)
 
     #plot_histograms(
-    #    'Class Distribution Flipped Training data vs Balanced Training Data',
-    #    CLASS_TYPES, class_counts1, class_counts2, 'r',
-    #    'c')
+    #    'Distribucion de Clases del Dataset Original vs Dataset Aumentado(x50 veces) ',
+    #    CLASS_TYPES, class_counts1, class_counts2, 'g',
+    #    'r')
     #
-    #DIVIDE VALID AND TRAIN SETS
-    train_split = '../signals_database/peru-signs-data/pickleFiles/train5_split_50.p'
-    validation_split = '../signals_database/peru-signs-data/pickleFiles/validation5_split_50.p'
+    #DIVIDE VALID_TEST AND TRAIN SETS
+    """
     X_train, y_train = readData(train_processed_file)
 
     X_train, X_validation, y_train, y_validation = train_test_split(X_train, y_train, test_size=0.25)
-    saveSplitData(X_train,y_train,train_split)
-    saveSplitData(X_validation,y_validation,validation_split)
+    saveSplitData(X_train,y_train,train_processed_file_split)
+    saveSplitData(X_validation,y_validation,validation_test_file_split)
+    """
