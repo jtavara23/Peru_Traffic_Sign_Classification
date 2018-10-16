@@ -34,7 +34,7 @@ NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 #--------------FOR BALANCED DATASET-----------------------
 #"""
 rutaDeModelo = 'modelsBalanced/model7/'
-TASA_APRENDIZAJE = 1e-4
+TASA_APRENDIZAJE = 5e-4
 
 NUM_CLASSES = 0  #43
 NUM_TRAIN = 0  #270900 *0.75 = 203175
@@ -44,11 +44,11 @@ IMAGE_SHAPE = 0  #(32,32,1)
 BATCH_SIZE = 525
 ITER_PER_EPOCA = 387  # = (203175 / 525)
 
-EPOCS = 15
+EPOCS = 100
 #ITERACIONES_ENTRENAMIENTO: (ITER_PER_EPOCA * EPOCS)
 ITERACIONES_ENTRENAMIENTO = ITER_PER_EPOCA * EPOCS
 
-CHKP_GUARDAR_MODELO = ITER_PER_EPOCA * 5
+CHKP_GUARDAR_MODELO = ITER_PER_EPOCA * 10
 CHKP_REVISAR_PROGRESO = 129
 
 LEARNING_DECAY = True
@@ -300,13 +300,20 @@ def create_cnn():
                                 lambda: tf.nn.dropout(capa_conv4, keep_prob=dropout_conv4),
                                 lambda: capa_conv4)
 
-    capa_conv1_drop = doPool(capa_conv1_drop, size=4)
+    if(fourLayers):
+        capa_conv1_drop = doPool(capa_conv1_drop, size=8)
+    else:
+        capa_conv1_drop = doPool(capa_conv1_drop, size=4)
     print( "after pooling:capa_conv1_drop: ",capa_conv1_drop.get_shape(),"\n***********\n")
-    capa_conv2_drop = doPool(capa_conv2_drop, size=2)
+
+    if(fourLayers):
+        capa_conv2_drop = doPool(capa_conv2_drop, size=4)
+    else:
+        capa_conv2_drop = doPool(capa_conv2_drop, size=2)
     print("after pooling:capa_conv2_drop: ",capa_conv2_drop.get_shape(),"\n***********\n")
 
     if(fourLayers):
-        capa_conv3_drop = doPool(capa_conv3_drop, size=1)
+        capa_conv3_drop = doPool(capa_conv3_drop, size=2)
         print("after pooling:capa_conv3_drop: ",capa_conv3_drop.get_shape(),"\n***********\n")
         layer_flat4, num_fc_layers4 = flatten_layer(capa_conv4_drop)
 
@@ -329,7 +336,10 @@ def create_cnn():
     #---------------------------Capa totalmente conectada--------------------------------------------
     #The previous layer.,  Num. inputs from prev. layer. , Num. outputs.
     fc1_inputs = num_fc_layers
-    fc1_outputs = 1024
+    if(fourLayers):
+        fc1_outputs = 702
+    else:
+        fc1_outputs = 1024
     dropout_fc1 = 0.5
     capa_fc1, pesos_fc1 = capa_fc(
         nombre="FC1",
@@ -341,8 +351,10 @@ def create_cnn():
     fc_capa1_drop = tf.cond(is_training,
                             lambda: tf.nn.dropout(capa_fc1, keep_prob=dropout_fc1),
                             lambda: capa_fc1)
-
-    fc2_inputs = 1024
+    if(fourLayers):
+        fc2_inputs = 702
+    else:
+        fc2_inputs = 1024
     fc2_outputs = NUM_CLASSES
     capa_fc2, pesos_fc2 = capa_fc(
         nombre="FC2",
