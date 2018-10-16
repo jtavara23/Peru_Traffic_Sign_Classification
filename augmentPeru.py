@@ -836,3 +836,16 @@ if __name__ == "__main__":
     saveSplitData(X_train,y_train,train_processed_file_split)
     saveSplitData(X_validation,y_validation,validation_test_file_split)
     """
+    #DIVIDE VALID AND TEST SETS
+    """
+    X_train, y_train = readData(validation_test_file_split)
+
+    X_valid, X_test, y_valid, y_test = train_test_split(X_train, y_train, test_size=0.60)
+    # 40 va para VALIDATION (10% del total)
+    # 60 va para TEST (15% del total)
+    saveSplitData(X_valid, y_valid, validation_split_file)
+    saveSplitData(X_test, y_test, test_processed_file)
+    """
+    #Read final sets
+    #x, y ,_= readOriginal(validation_split_file)
+    #xx, yy,_ = readOriginal(test_processed_file)
