@@ -20,6 +20,7 @@ import matplotlib.font_manager as fm
 from matplotlib.collections import QuadMesh
 import seaborn as sn
 
+num_classes = 0
 
 def get_new_fig(fn, figsize=[9,9]):
     """ Init graphics """
@@ -35,6 +36,9 @@ def configcell_text_and_colors(array_df, lin, col, oText, facecolors, posi, fz, 
       and return text elements to add and to dell
       @TODO: use fmt
     """
+
+    indicadores = [0,0,0,0]
+
     text_add = []; text_del = [];
     cell_val = array_df[lin][col]
     tot_all = array_df[-1][-1]
@@ -68,12 +72,14 @@ def configcell_text_and_colors(array_df, lin, col, oText, facecolors, posi, fz, 
 
         #text to ADD
         font_prop = fm.FontProperties(weight='bold', size=fz)
-        text_kwargs = dict(color='w', ha="center", va="center", gid='sum', fontproperties=font_prop)
-        lis_txt = ['%d'%(cell_val), per_ok_s, '%.2f%%'%(per_err)]
+        text_kwargs = dict(color='y', ha="center", va="center", gid='sum', fontproperties=font_prop)
+        #lis_txt = ['%d'%(cell_val), per_ok_s, '%.2f%%'%(per_err)]
+        lis_txt = [per_ok_s, '%.2f%%'%(per_err)]
         lis_kwa = [text_kwargs]
-        dic = text_kwargs.copy(); dic['color'] = 'g'; lis_kwa.append(dic);
-        dic = text_kwargs.copy(); dic['color'] = 'r'; lis_kwa.append(dic);
-        lis_pos = [(oText._x, oText._y-0.3), (oText._x, oText._y), (oText._x, oText._y+0.3)]
+        dic = text_kwargs.copy(); dic['color'] = 'w'; lis_kwa.append(dic);
+        dic = text_kwargs.copy(); dic['color'] = 'c'; lis_kwa.append(dic);
+        #lis_pos = [(oText._x, oText._y-0.3), (oText._x, oText._y), (oText._x, oText._y+0.3)]
+        lis_pos = [(oText._x, oText._y-0.2), (oText._x, oText._y+0.2)]
         for i in range(len(lis_txt)):
             newText = dict(x=lis_pos[i][0], y=lis_pos[i][1], text=lis_txt[i], kw=lis_kwa[i])
             #print 'lin: %s, col: %s, newText: %s' %(lin, col, newText)
@@ -86,7 +92,7 @@ def configcell_text_and_colors(array_df, lin, col, oText, facecolors, posi, fz, 
             carr = [0.17, 0.20, 0.17, 1.0]
         facecolors[posi] = carr
 
-    else:
+    else:#Not last line neither last column
         if(per > 0):
             txt = '%s\n%.2f%%' %(cell_val, per)
         else:
@@ -95,14 +101,15 @@ def configcell_text_and_colors(array_df, lin, col, oText, facecolors, posi, fz, 
             elif(show_null_values == 1):
                 txt = '0'
             else:
-                txt = '0\n0.0%'
+                txt = '0\n0.0'
         oText.set_text(txt)
 
         #main diagonal
         if(col == lin):
             #set color of the textin the diagonal to white
-            oText.set_color('w')
-            # set background color in the diagonal to blue
+            oText.set_color('b')
+            #oText.set
+            # set background color in the diagonal to GREEEN
             facecolors[posi] = [0.35, 0.8, 0.55, 1.0]
         else:
             oText.set_color('r')
@@ -125,7 +132,7 @@ def insert_totals(df_cm):
 #
 
 def pretty_plot_confusion_matrix(df_cm, annot=True, cmap="Oranges", fmt='.2f', fz=11,
-      lw=0.5, cbar=False, figsize=[8,8], show_null_values=0, pred_val_axis='y'):
+      lw=0.2, cbar=False, figsize=[8,8], show_null_values=0, pred_val_axis='y'):
     """
       print conf matrix with default layout (like matlab)
       params:
@@ -138,14 +145,16 @@ def pretty_plot_confusion_matrix(df_cm, annot=True, cmap="Oranges", fmt='.2f', f
                         'col' or 'x': show predicted values in columns (x axis) instead lines
                         'lin' or 'y': show predicted values in lines   (y axis)
     """
-    if(pred_val_axis in ('col', 'x')):
-        xlbl = 'Predicted'
-        ylbl = 'Actual'
-    else:
-        xlbl = 'Actual'
-        ylbl = 'Predicted'
-        df_cm = df_cm.T
-
+    if(num_classes < 10):
+    #"""
+        if(pred_val_axis in ('col', 'x')):
+            xlbl = 'Predecida'
+            ylbl = 'Deseada'
+        else:
+            xlbl = 'Deseada'
+            ylbl = 'Predecida'
+            df_cm = df_cm.T
+    #"""
     # create "Total" column
     insert_totals(df_cm)
 
@@ -157,8 +166,9 @@ def pretty_plot_confusion_matrix(df_cm, annot=True, cmap="Oranges", fmt='.2f', f
                     cbar=cbar, cmap=cmap, linecolor='w', fmt=fmt)
 
     #set ticklabels rotation
-    ax.set_xticklabels(ax.get_xticklabels(), rotation = 45, fontsize = 10)
-    ax.set_yticklabels(ax.get_yticklabels(), rotation = 25, fontsize = 10)
+    if(num_classes < 10):
+        ax.set_xticklabels(ax.get_xticklabels(), rotation = 45, fontsize = 8)
+    ax.set_yticklabels(ax.get_yticklabels(), rotation = 25, fontsize = 8)
 
     # Turn off all the ticks
     for t in ax.xaxis.get_major_ticks():
@@ -171,22 +181,26 @@ def pretty_plot_confusion_matrix(df_cm, annot=True, cmap="Oranges", fmt='.2f', f
     #face colors list
     quadmesh = ax.findobj(QuadMesh)[0]
     facecolors = quadmesh.get_facecolors()
-
+    standard_fz = fz
     #iter in text elements
     array_df = np.array( df_cm.to_records(index=False).tolist() )
     text_add = []; text_del = [];
     posi = -1 #from left to right, bottom to top.
+
     for t in ax.collections[0].axes.texts: #ax.texts:
         pos = np.array( t.get_position()) - [0.5,0.5]
         lin = int(pos[1]); col = int(pos[0]);
         posi += 1
         #print ('>>> pos: %s, posi: %s, val: %s, txt: %s' %(pos, posi, array_df[lin][col], t.get_text()))
 
+        #fz = fz + 1
+
         #set text
         txt_res = configcell_text_and_colors(array_df, lin, col, t, facecolors, posi, fz, fmt, show_null_values)
 
         text_add.extend(txt_res[0])
         text_del.extend(txt_res[1])
+        fz = standard_fz
 
     #remove the old ones
     for item in text_del:
@@ -196,14 +210,17 @@ def pretty_plot_confusion_matrix(df_cm, annot=True, cmap="Oranges", fmt='.2f', f
         ax.text(item['x'], item['y'], item['text'], **item['kw'])
 
     #titles and legends
-    ax.set_title('Confusion matrix')
-    ax.set_xlabel(xlbl)
-    ax.set_ylabel(ylbl)
+    if(num_classes < 10):
+        ax.set_title('Matriz de Confusion')
+        ax.set_xlabel(xlbl)
+        ax.set_ylabel(ylbl)
+
     plt.tight_layout()  #set layout slim
     plt.show()
+    print("End of Plot")
 #
 
-def plot_confusion_matrix_from_data(y_test, predictions, columns=None, annot=True, cmap="Oranges",
+def plot_confusion_matrix_from_data(y_test, predictions, num_classes=0, annot=True, cmap="Oranges",
       fmt='.2f', fz=11, lw=0.5, cbar=False, figsize=[8,8], show_null_values=0, pred_val_axis='lin'):
     """
         plot confusion matrix function with y_test (actual values) and predictions (predic),
@@ -213,67 +230,40 @@ def plot_confusion_matrix_from_data(y_test, predictions, columns=None, annot=Tru
     from pandas import DataFrame
 
     #data
-    if(not columns):
         #labels axis integer:
-        ##columns = range(1, len(np.unique(y_test))+1)
+    columns = range(1, num_classes+1)
         #labels axis string:
-        from string import ascii_uppercase
-        columns = ['class %s' %(i) for i in list(ascii_uppercase)[0:len(np.unique(y_test))]]
+    #from string import ascii_uppercase
+    #columns = ['class %s' %(i) for i in list(ascii_uppercase)[0:num_classes)]]
 
     confm = confusion_matrix(y_test, predictions)
-    cmap = 'Oranges';
-    fz = 11;
-    figsize=[9,9];
     show_null_values = 2
-    df_cm = DataFrame(confm, index=columns, columns=columns)
+    #df_cm = DataFrame(confm, index=columns, columns=columns)
+    df_cm = DataFrame(confm)
+    print("Plotting Matrix")
     pretty_plot_confusion_matrix(df_cm, fz=fz, cmap=cmap, figsize=figsize, show_null_values=show_null_values, pred_val_axis=pred_val_axis)
 #
 
 
 
-#
-#TEST functions
-#
-def _test_cm():
-    #test function with confusion matrix done
-    array = np.array( [[13,  0,  1,  0,  2,  0],
-                       [ 0, 50,  2,  0, 10,  0],
-                       [ 0, 13, 16,  0,  0,  3],
-                       [ 0,  0,  0, 13,  1,  0],
-                       [ 0, 40,  0,  1, 15,  0],
-                       [ 0,  0,  0,  0,  0, 20]])
-    #get pandas dataframe
-    df_cm = DataFrame(array, index=range(1,7), columns=range(1,7))
-    #colormap: see this and choose your more dear
-    cmap = 'PuRd'
-    pretty_plot_confusion_matrix(df_cm, cmap=cmap)
-#
-
-def _test_data_class():
-    """ test function with y_test (actual values) and predictions (predic) """
-    #data
-    y_test = np.array([1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5])
-    predic = np.array([1,2,4,3,5, 1,2,4,3,5, 1,2,3,4,4, 1,4,3,4,5, 1,2,4,4,5, 1,2,4,4,5, 1,2,4,4,5, 1,2,4,4,5, 1,2,3,3,5, 1,2,3,3,5, 1,2,3,4,4, 1,2,3,4,1, 1,2,3,4,1, 1,2,3,4,1, 1,2,4,4,5, 1,2,4,4,5, 1,2,4,4,5, 1,2,4,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5, 1,2,3,4,5])
-    """
-      Examples to validate output (confusion matrix plot)
-        actual: 5 and prediction 1   >>  3
-        actual: 2 and prediction 4   >>  1
-        actual: 3 and prediction 4   >>  10
-    """
-    columns = []
+def _test_data_class(y_test, predic, N_class):
+    num_classes = N_class
     annot = True;
-    cmap = 'Oranges';
+    cmap = 'PuRd'
     fmt = '.2f'
     lw = 0.5
     cbar = False
     show_null_values = 2
     pred_val_axis = 'y'
     #size::
-    fz = 12;
-    figsize = [9,9];
-    if(len(y_test) > 10):
-        fz=9; figsize=[14,14];
-    plot_confusion_matrix_from_data(y_test, predic, columns,
+    fz = 12
+    figsize = [10,10]
+    if(num_classes > 10):
+        print("Dataset Aleman")
+        cmap = 'Oranges'
+        fz = 6
+        figsize=[22,34]
+    plot_confusion_matrix_from_data(y_test, predic, num_classes,
       annot, cmap, fmt, fz, lw, cbar, figsize, show_null_values, pred_val_axis)
 #
 
