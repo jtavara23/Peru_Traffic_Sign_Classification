@@ -92,6 +92,7 @@ rope
 scikit-image
 scikit-learn
 scipy
+seaborn
 simplegeneric
 six
 snowballstemmer
@@ -99,9 +100,6 @@ Sphinx
 sphinxcontrib-websupport
 spyder
 tabulate
-tensorboard
-tensorflow
-tensorflow-tensorboard
 termcolor
 testpath
 Theano
