@@ -33,29 +33,29 @@ NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 
 #--------------FOR BALANCED DATASET-----------------------
 #"""
-rutaDeModelo = 'models_Peru/model1/'
+rutaDeModelo = 'models_Peru/model7/'
 TASA_APRENDIZAJE = 1e-4
 
-NUM_CLASSES = 0  #43
-NUM_TRAIN = 0  #270900 *0.75 = 23485
-NUM_TEST = 0  #270900 *0.25 = 7829
+NUM_CLASSES = 0  #7
+NUM_TRAIN = 0  #31314 *0.75 = 23485
+NUM_VALID = 0  #31314 *0.10 = 3131 --- Test: 4698 (15%)
 IMAGE_SHAPE = 0  #(60,60,1)
 
 BATCH_SIZE = 305
 ITER_PER_EPOCA = 77  # = (23485 / 427)
 
-EPOCS = 100
+EPOCS = 80
 #ITERACIONES_ENTRENAMIENTO: (ITER_PER_EPOCA * EPOCS)
 ITERACIONES_ENTRENAMIENTO = ITER_PER_EPOCA * EPOCS
 
-CHKP_GUARDAR_MODELO = ITER_PER_EPOCA * 5
+CHKP_GUARDAR_MODELO = ITER_PER_EPOCA * 10 # normal is 5
 CHKP_REVISAR_PROGRESO = 77
 
 LEARNING_DECAY = True
 L2_REG = True
 L2_lambda = 0.0001
 DECAY_RATE = 0.99#(the smaller the lower to learn)
-fourLayers = False
+fourLayers = True
 #"""
 #-----------------------------------------------------------
 
@@ -125,12 +125,13 @@ def inicializar_bias(shape):
 def flatten_layer(layer):
     # Get the shape of the input layer.
     layer_shape = layer.get_shape()
-    #print("Layer shape: ", layer_shape)
+    print("Layer shape: ", layer_shape)
     num_features = layer_shape[1:4].num_elements()
     # The number of features is: img_height * img_width * num_channels
+    print("num_features: ", num_features)
     layer_flat = tf.reshape(layer, [-1, num_features])
-    #print("layer_flat: : ", layer_flat)
-
+    print("layer_flat: : ", layer_flat)
+    print("=======================")
     return layer_flat, num_features
 
 
@@ -149,6 +150,7 @@ def conv_layer(nombre, entrada, num_inp_channels, filter_size, num_filters,
 
         if use_pooling:
             convolucionPool = doPool(convolucion,2)
+            print( nombre,"after pooling: ",convolucion.get_shape(),"\n***********\n")
     return convolucionPool, pesos, convolucion
 
 
@@ -162,7 +164,7 @@ def doPool(convolucion, size):
 
 def capa_fc(nombre, entrada, num_inputs, num_outputs, use_relu=True):
     with tf.name_scope(nombre):
-        #print( entrada.get_shape()," multiplica ",num_inputs,num_outputs)
+        print( entrada.get_shape()," multiplica ",num_inputs,num_outputs)
         pesos = inicializar_pesos(shape=[num_inputs, num_outputs])
         biases = inicializar_bias([num_outputs])
         layer = tf.matmul(entrada, pesos) + biases
@@ -179,7 +181,7 @@ def capa_fc(nombre, entrada, num_inputs, num_outputs, use_relu=True):
 def printArquitecture(tam_filtro,num_filtro,dropout_conv,fc1_inputs,fc2_inputs,dropout_fc1):
     print("=================== DATA per {} epocs ====================".format(EPOCS))
     print("            Training set: {} examples".format(NUM_TRAIN))
-    print("          Validation set: {} examples".format(NUM_TEST))
+    print("          Validation set: {} examples".format(NUM_VALID))
     print("              Batch size: {}".format(BATCH_SIZE))
     print("       Number of classes: {}".format(NUM_CLASSES))
     print("        Image data shape: {}".format(IMAGE_SHAPE))
@@ -217,7 +219,7 @@ def create_cnn():
     y_deseada = tf.placeholder(
         'float', shape=[None, NUM_CLASSES], name=NOMBRE_TENSOR_SALIDA_DESEADA)
 
-    #print( "entradas shape ",entradas.get_shape() # =>(?, 32, 32, 1))
+    print( "entradas shape ",entradas.get_shape()) # =>(?, 60, 60, 1))
 
     #Aplicarmos dropout entre la capa FC y la capa de salida
     #keep_prob = tf.placeholder('float',name=NOMBRE_PROBABILIDAD)
@@ -237,6 +239,8 @@ def create_cnn():
                               lambda: tf.nn.dropout(capa_conv1, keep_prob=dropout_conv1),
                               lambda: capa_conv1)
 
+    print("capa_conv1 ",capa_conv1)
+
     tam_filtro2 = 5
     num_filtro2 = 64
     dropout_conv2 = 0.7
@@ -251,6 +255,8 @@ def create_cnn():
                               lambda: tf.nn.dropout(capa_conv2, keep_prob=dropout_conv2),
                               lambda: capa_conv2)
 
+    print("capa_conv2 ",capa_conv2)
+
     tam_filtro3 = 5
     num_filtro3 = 128
     dropout_conv3 = 0.6
@@ -264,6 +270,7 @@ def create_cnn():
     capa_conv3_drop = tf.cond(is_training,
                               lambda: tf.nn.dropout(capa_conv3, keep_prob=dropout_conv3),
                               lambda: capa_conv3)
+    print("capa_conv3 ",capa_conv3)
     if(fourLayers):
         tam_filtro4 = 7
         num_filtro4 = 128
@@ -278,14 +285,23 @@ def create_cnn():
         capa_conv4_drop = tf.cond(is_training,
                                 lambda: tf.nn.dropout(capa_conv4, keep_prob=dropout_conv4),
                                 lambda: capa_conv4)
+        print("capa_conv4 ",capa_conv4)
 
-    capa_conv1_drop = doPool(capa_conv1_drop, size=4)
+    if(fourLayers):
+        capa_conv1_drop = doPool(capa_conv1_drop, size=8)
+    else:
+        capa_conv1_drop = doPool(capa_conv1_drop, size=4)
     print( "after pooling:capa_conv1_drop: ",capa_conv1_drop.get_shape(),"\n***********\n")
-    capa_conv2_drop = doPool(capa_conv2_drop, size=2)
+
+
+    if(fourLayers):
+        capa_conv2_drop = doPool(capa_conv2_drop, size=4)
+    else:
+        capa_conv2_drop = doPool(capa_conv2_drop, size=2)
     print("after pooling:capa_conv2_drop: ",capa_conv2_drop.get_shape(),"\n***********\n")
 
     if(fourLayers):
-        capa_conv3_drop = doPool(capa_conv3_drop, size=1)
+        capa_conv3_drop = doPool(capa_conv3_drop, size=2)
         print("after pooling:capa_conv3_drop: ",capa_conv3_drop.get_shape(),"\n***********\n")
         layer_flat4, num_fc_layers4 = flatten_layer(capa_conv4_drop)
 
@@ -351,13 +367,15 @@ def create_cnn():
             regularizers = (tf.nn.l2_loss(pesos_conv1) + tf.nn.l2_loss(pesos_conv2) +
                             tf.nn.l2_loss(pesos_conv3) + tf.nn.l2_loss(pesos_fc1) +
                             tf.nn.l2_loss(pesos_fc2))
+            if(fourLayers):
+                regularizers = regularizers + tf.nn.l2_loss(pesos_conv4)
             error =  cross_entropy_mean + L2_lambda * regularizers
             tf.summary.scalar('error_Acc', error)
     else:
         error = cross_entropy_mean
     #---------------------------------------------------------------------------
 
-    with tf.name_scope("entrenamiento"):
+    with tf.name_scope("Entrenamiento"):
         #Funcion de optimizacion
         iterac_entren = tf.Variable(0, name='iterac_entren', trainable=False)
         #A las 15 iteraciones se cambio el (iterperepoca *5) -> (iterperepoca)
@@ -370,7 +388,7 @@ def create_cnn():
         #optimizador = tf.train.AdamOptimizer(TASA_APRENDIZAJE).minimize(error, global_step=iterac_entren)
         optimizador = tf.train.AdamOptimizer(lr).minimize(error, global_step=iterac_entren)
 
-    with tf.name_scope("Evaluacion"):
+    with tf.name_scope("Validacion"):
         # evaluacion
         prediccion_correcta = tf.equal(
             tf.argmax(y_calculada, 1), tf.argmax(y_deseada, 1))
@@ -446,7 +464,7 @@ if __name__ == "__main__":
 
     #print( X_train[0])
     NUM_TRAIN = y_train.shape[0]
-    NUM_TEST = y_validation.shape[0]
+    NUM_VALID = y_validation.shape[0]
     IMAGE_SHAPE = X_train[0].shape
     NUM_CLASSES = len(set(y_train))
 
@@ -491,11 +509,11 @@ if __name__ == "__main__":
     entren_writer = tf.summary.FileWriter(rutaDeModelo + 'entrenamiento',
                                           sess.graph)
     #entren_writer.add_graph(sess.graph)
-    evalua_writer = tf.summary.FileWriter(rutaDeModelo + 'evaluacion')#you don want the the graph
+    evalua_writer = tf.summary.FileWriter(rutaDeModelo + 'validacion')#you don want the the graph
     epocas_completadas = 0
     indice_en_epoca = 0
 
-    clases_calc = np.zeros(shape=NUM_TEST, dtype=np.int)
+    clases_calc = np.zeros(shape=NUM_VALID, dtype=np.int)
 
     comienzo_time = time.time()
 
@@ -532,8 +550,8 @@ if __name__ == "__main__":
             avg_loss = avg_acc = 0.
             #--------------------------------------------------------------
             feed_dictx = {
-                entradas: imagenes_eval[:1500],
-                y_deseada: clases_eval[:1500],
+                entradas: imagenes_eval[:2500],
+                y_deseada: clases_eval[:2500],
                 is_training: False#dont use dropout in Testing
             }
             print_write_validationSet(i, sess,resumen, acierto, feed_dictx, evalua_writer)
