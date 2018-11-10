@@ -4,36 +4,37 @@ import pickle
 from pandas.io.parsers import read_csv
 from matplotlib import pyplot as plt
 import tensorflow as tf
-from funcionesAuxiliares import readData, plot_example_errors, plot_confusion_matrix
+from funcionesAuxiliares import readData, plot_example_errors, plot_confusion_matrix_Large, plot_roc
 import math
 import os
 import datetime
+import sys
 #from keras.backend import manual_variable_initialization as ke
+
+
+"""
+To execute run:
+    python testProcess.py [peru/german/german-ext] [type of Model] [numb Of Model] [show_result] [show_plots]
+
+"""
+
+modelo = 'model1'
 #tensorboard --logdir modelsBalanced/model1/
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 np.set_printoptions(threshold=np.nan)
 
 NUM_TEST = 0
-BATCH_SIZE = 1958#2000
 NOMBRE_TENSOR_ENTRADA = 'inputX'
 NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 NOMBRE_PROBABILIDAD = 'mantener_probabilidad'
 
-#rutaDeModelo = 'modelsBalanced/model5/'
-#rutaDeModelo = 'models10extend/'
-rutaDeModelo = 'models_Peru_Balanced/model1/'
 
-lastModelName = 'model-7700.meta'
-
-#test_file = '../signals_database/traffic-signs-data/test_2Processed.p'
-#test_file = '../signals_database/traffic-signs-data/test_5ExtendedProcessed.p'
-test_file = '../signals_database/peru-signs-data/pickleFiles/validation5_split_50.p'
-
-def procesamiento(X, y, type):
+def procesamiento(X, y,typeOfSignal):
     """
 	Preprocess image data, and convert labels into one-hot
 	Arguments:
-	    * X: Array of images, should be 32,32,1 of shape and each pixel between [0,1]
+	    * X: Array of images, should be height,width,1 of shape and each pixel between [0,1]
 	    * y: Array of labels
 	Returns:
 	    * Preprocessed X, one-hot version of y
@@ -53,21 +54,15 @@ def procesamiento(X, y, type):
     # 0 => [1 0 0 0 0 0 0 0 0 0....0 0 0 0]
     # 1 => [0 1 0 0 0 0 0 0 0 0....0 0 0 0]
     # ...
-    # 43 => [0 0 0 0 0 0 0 0 0 0....0 0 0 1]
-    y_onehot = np.zeros((y.shape[0], 7)) #change to 7 when analyzing PERU SIGNS
+    # N => [0 0 0 0 0 0 0 0 0 0....0 0 0 1]
+    if(typeOfSignal == "peru"):
+        y_onehot = np.zeros((y.shape[0], 7))
+    else:
+        y_onehot = np.zeros((y.shape[0], 43))
+
     for i, onehot_label in enumerate(y_onehot):
         onehot_label[y[i]] = 1.0
     y = y_onehot
-
-    #if type:
-    #perm = np.arange(NUM_TRAIN)
-    #else:
-    #perm = np.arange(NUM_TEST)
-    #np.random.shuffle(perm)
-    #perm = stratified_shuffle(clases_entrenam_flat, 10)
-    #X = X[perm]
-    #y = y[perm]
-    #y_flatten = y_flatten[perm]
 
     return X, y, y_flatten
 
@@ -84,79 +79,107 @@ def writeResults(msg, test_file):
 
 
 if __name__ == "__main__":
+    typeOfSignal = str(sys.argv[1])
+    modelo = str(sys.argv[2])
+    model_number = str(sys.argv[3])
+    show_result = str(sys.argv[4]).lower()
+    show_plots = str(sys.argv[5]).lower()
+
+    BATCH_SIZE = 2000
+    num_classes = 43
+
+    #For GERMAN FILES [test_5ExtendedProcessed] or [test_2Processed]
+    if(typeOfSignal == "german"):
+        rutaDeModelo = 'modelsBalanced/'+modelo+'/'
+        test_file = '../signals_database/traffic-signs-data/test_2Processed.p'
+
+    elif(typeOfSignal == "peru"):
+        num_classes = 7
+        rutaDeModelo = 'models_Peru/'+modelo+'/'
+        test_file = '../signals_database/peru-signs-data/pickleFiles/test_1Processed.p'#validation_test_5_split_50
+
+    else:#german-ext
+        rutaDeModelo = 'models10extend/'+modelo+'/'
+        test_file = '../signals_database/traffic-signs-data/test_5ExtendedProcessed.p'
+
 
     X_test, y_test = readData(test_file)
     NUM_TEST = y_test.shape[0]
 
     imagenes_eval, clases_eval, clases_eval_flat = procesamiento(
-        X_test, y_test, 0)
+        X_test, y_test,typeOfSignal)
 
     #print clases_eval_flat
 
-    # Restauramos el ultimo punto de control
-    #tf.reset_default_graph()
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        saver = tf.train.import_meta_graph(rutaDeModelo + lastModelName)
-        saver.restore(sess, tf.train.latest_checkpoint(rutaDeModelo + '.'))
-        print("Modelo restaurado",
-              tf.train.latest_checkpoint(rutaDeModelo + '.'))
+    #sess = tf.Session()
 
-        #Tensor predictor para clasificar la imagen
-        predictor = tf.get_collection("predictor")[0]
-        #cantidad de imagenes a clasificar
-        cant_evaluar = (imagenes_eval.shape[0])
-        print("Cantidad a evaluar: ", cant_evaluar)
-        clases_pred = np.zeros(shape=cant_evaluar, dtype=np.int)
-        #"""
-        start = 0
-        aux = 0
-        print("Prediciendo clases...")
-        while start < cant_evaluar:
-            end = min(start + BATCH_SIZE, cant_evaluar)
-            print(end)
+    sess = tf.Session(config=tf.ConfigProto(
+        allow_soft_placement=True,
+        log_device_placement=False))#"Whether to log device placement
 
-            images_evaluar = imagenes_eval[start:end, :]
-            clases_evaluar = clases_eval[start:end, :]
+    sess.run(tf.global_variables_initializer())
+    saver = tf.train.import_meta_graph(rutaDeModelo + "model-"+model_number+".meta")
+    saver.restore(sess, tf.train.latest_checkpoint(rutaDeModelo + '.'))
+    print(modelo +" - "+model_number+" restaurado",
+            tf.train.latest_checkpoint(rutaDeModelo + '.'))
 
-            #Introduce los datos para ser usados en un tensor
-            #feed_dictx = {NOMBRE_TENSOR_ENTRADA+":0": images_evaluar, NOMBRE_TENSOR_SALIDA_DESEADA+":0": clases_evaluar,NOMBRE_PROBABILIDAD+":0":1.0}
-            feed_dictx = {
-                NOMBRE_TENSOR_ENTRADA + ":0": images_evaluar,
-                NOMBRE_TENSOR_SALIDA_DESEADA + ":0": clases_evaluar,
-                NOMBRE_PROBABILIDAD + ":0": False
-            }
+    #Tensor predictor para clasificar la imagen
+    predictor = tf.get_collection("predictor")[0]
+    #cantidad de imagenes a clasificar
+    cant_evaluar = (imagenes_eval.shape[0])
+    print("Cantidad a evaluar: ", cant_evaluar)
+    clases_pred = np.zeros(shape=cant_evaluar, dtype=np.int)
+    #"""
+    start = 0
+    aux = 0
+    print("Prediciendo clases...")
+    while start < cant_evaluar:
+        end = min(start + BATCH_SIZE, cant_evaluar)
+        print(end)
 
-            # Calcula la clase predecida , atraves del tensor predictor
-            clases_pred[start:end] = sess.run(predictor, feed_dict=feed_dictx)
+        images_evaluar = imagenes_eval[start:end, :]
+        clases_evaluar = clases_eval[start:end, :]
 
-            # Asigna el indice final del batch actual
-            # como comienzo para el siguiente batch
-            aux = start
-            start = end
+        #Introduce los datos para ser usados en un tensor
+        #feed_dictx = {NOMBRE_TENSOR_ENTRADA+":0": images_evaluar, NOMBRE_TENSOR_SALIDA_DESEADA+":0": clases_evaluar,NOMBRE_PROBABILIDAD+":0":1.0}
+        feed_dictx = {
+            NOMBRE_TENSOR_ENTRADA + ":0": images_evaluar,
+            NOMBRE_TENSOR_SALIDA_DESEADA + ":0": clases_evaluar,
+            NOMBRE_PROBABILIDAD + ":0": False
+        }
 
-        #print clases_pred[aux:end]
-        # Convenience variable for the true class-numbers of the test-set.
-        clases_deseadas = clases_eval_flat
+        # Calcula la clase predecida , atraves del tensor predictor
+        clases_pred[start:end] = sess.run(predictor, feed_dict=feed_dictx)
 
-        # Cree una matriz booleana
-        correct = (clases_deseadas == clases_pred)
+        # Asigna el indice final del batch actual
+        # como comienzo para el siguiente batch
+        aux = start
+        start = end
 
-        # Se calcula el numero de imagenes correctamente clasificadas.
-        correct_sum = correct.sum()
+    #print clases_pred[aux:end]
+    # Convenience variable for the true class-numbers of the test-set.
+    clases_deseadas = clases_eval_flat
 
-        # La precision de la clasificacion es el numero de imgs clasificadas correctamente
-        acc = float(correct_sum) / cant_evaluar
+    # Cree una matriz booleana
+    correct = (clases_deseadas == clases_pred)
 
-        msg = "Acierto en el conjunto de Testing: {0:.2%} ({1} / {2})"
+    # Se calcula el numero de imagenes correctamente clasificadas.
+    correct_sum = correct.sum()
+
+    # La precision de la clasificacion es el numero de imgs clasificadas correctamente
+    acc = float(correct_sum) / cant_evaluar
+
+    msg = "Acierto en el conjunto de Testing: {0:.2%} ({1} / {2})"
+    if(show_result == "true"):
         print(msg.format(acc, correct_sum, cant_evaluar))
+        writeResults(msg.format(acc, correct_sum, cant_evaluar), test_file)
 
+    if(show_plots == "true"):
         # Muestra algunas imagenes que no fueron clasificadas correctamente
         #plot_example_errors(cls_pred=clases_pred, correct=correct,images = imagenes_eval, labels_flat=clases_eval_flat)
         print("Mostrando Matriz de Confusion")
-        #plot_confusion_matrix(clases_pred, clases_deseadas,43)
+        #plot_confusion_matrix_Large(clases_pred, clases_deseadas,num_classes)
+        plot_roc(clases_pred, clases_deseadas,2)
         #plt.show()
 
-        writeResults(msg.format(acc, correct_sum, cant_evaluar), test_file)
-        #"""
-        print("Fin de evaluacion")
+    print("Fin de evaluacion")
