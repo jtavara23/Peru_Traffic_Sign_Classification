@@ -759,19 +759,11 @@ def showHistogram(file, title):
         CLASS_TYPES,
         class_counts,
         tick_label=signnames,
-        color='g',
+        color='b',
         width=0.7,
         align='center')
     plt.title(title)
     plt.show()
-
-
-def plotCmpnNewTestHistograms():
-    X_test, y_test, class_counts1 = readOriginal(test_file)
-    X_test_extended, y_test_extended, class_counts2 = readOriginal(
-        test_processed_extended_file)
-    plot_histograms('Distribución de clases a través de datos de prueba ampliados',
-                    CLASS_TYPES, class_counts1, class_counts2, 'g', 'm')
 
 def saveSplitData(X_data,y_data,targetFile):
     new_data = {'features': X_data, 'labels': y_data}
