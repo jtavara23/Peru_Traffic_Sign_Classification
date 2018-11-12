@@ -44,7 +44,7 @@ IMAGE_SHAPE = 0  #(32,32,1)
 BATCH_SIZE = 305
 ITER_PER_EPOCA =  77  # = (23485 / 427)
 
-EPOCS = 80
+EPOCS = 50
 #ITERACIONES_ENTRENAMIENTO: (ITER_PER_EPOCA * EPOCS)
 ITERACIONES_ENTRENAMIENTO = ITER_PER_EPOCA * EPOCS
 
@@ -471,8 +471,8 @@ def showLayersForImage(imageConvol, internal_layers,entradas):
 
 if __name__ == "__main__":
 
-    train_split_balanced = '../signals_database/traffic-signs-data/train5_split_balanced.p'
-    validation_split_balanced = '../signals_database/traffic-signs-data/validation5_split_balanced.p'
+    train_split_balanced = '../signals_database/peru-signs-data/pickleFiles/train5_split_50.p'
+    validation_split_balanced = '../signals_database/peru-signs-data/pickleFiles/validation5_split_50.p'
     signnames = read_csv(
         "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
 
@@ -577,8 +577,8 @@ if __name__ == "__main__":
                 avg_loss = avg_acc = 0.
                 #--------------------------------------------------------------
                 feed_dictx = {
-                    entradas: imagenes_eval[:5000],
-                    y_deseada: clases_eval[:5000],
+                    entradas: imagenes_eval[:3131],
+                    y_deseada: clases_eval[:3131],
                     is_training: False#dont use dropout in Testing
                 }
                 print_write_validationSet(i, sess,resumen, acierto, feed_dictx, evalua_writer)
