@@ -15,10 +15,11 @@ import sys
 """
 To execute run:
     python testProcess.py [peru/german/german-ext] [type of Model] [numb Of Model] [show_result] [show_plots]
-
+    Example: python testProcess.py peru model0 7700 true false
 """
 
-modelo = 'model1'
+modelo = ""
+model_number = ""
 #tensorboard --logdir modelsBalanced/model1/
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -70,7 +71,7 @@ def procesamiento(X, y,typeOfSignal):
 #63150
 def writeResults(msg, test_file):
     outFile = open(rutaDeModelo+"logtestResult.log", "a")
-    outFile.write(repr(tf.train.latest_checkpoint(rutaDeModelo + '.')) + "\n")
+    outFile.write(repr(rutaDeModelo + "model-"+model_number) + "\n")
     outFile.write(test_file + "\n")
     outFile.write(msg)
     outFile.write("\n" + str(datetime.date.today()))
@@ -119,9 +120,10 @@ if __name__ == "__main__":
 
     sess.run(tf.global_variables_initializer())
     saver = tf.train.import_meta_graph(rutaDeModelo + "model-"+model_number+".meta")
-    saver.restore(sess, tf.train.latest_checkpoint(rutaDeModelo + '.'))
-    print(modelo +" - "+model_number+" restaurado",
-            tf.train.latest_checkpoint(rutaDeModelo + '.'))
+    saver.restore(sess, rutaDeModelo + "model-"+model_number)
+
+    print(modelo +" - "+model_number+" restaurado ",
+            rutaDeModelo + "model-"+model_number)
 
     #Tensor predictor para clasificar la imagen
     predictor = tf.get_collection("predictor")[0]
