@@ -29,12 +29,12 @@ NOMBRE_TENSOR_SALIDA_CALCULADA = 'outputYCalculada'
 NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 
 
-#tensorboard --logdir modelsBalanced/model1/
+#tensorboard --logdir models_Peru/model1/
 
 #--------------FOR BALANCED DATASET-----------------------
 #"""
-rutaDeModelo = 'models_Peru/model7/'
-TASA_APRENDIZAJE = 1e-4
+rutaDeModelo = 'models_Peru/model1/'
+TASA_APRENDIZAJE = 5e-4
 
 NUM_CLASSES = 0  #7
 NUM_TRAIN = 0  #31314 *0.75 = 23485
@@ -44,18 +44,18 @@ IMAGE_SHAPE = 0  #(60,60,1)
 BATCH_SIZE = 305
 ITER_PER_EPOCA = 77  # = (23485 / 427)
 
-EPOCS = 80
+EPOCS = 100
 #ITERACIONES_ENTRENAMIENTO: (ITER_PER_EPOCA * EPOCS)
 ITERACIONES_ENTRENAMIENTO = ITER_PER_EPOCA * EPOCS
 
-CHKP_GUARDAR_MODELO = ITER_PER_EPOCA * 10 # normal is 5
+CHKP_GUARDAR_MODELO = ITER_PER_EPOCA * 5 # normal is 5
 CHKP_REVISAR_PROGRESO = 77
 
 LEARNING_DECAY = True
 L2_REG = True
 L2_lambda = 0.0001
 DECAY_RATE = 0.99#(the smaller the lower to learn)
-fourLayers = True
+fourLayers = False
 #"""
 #-----------------------------------------------------------
 
@@ -550,8 +550,8 @@ if __name__ == "__main__":
             avg_loss = avg_acc = 0.
             #--------------------------------------------------------------
             feed_dictx = {
-                entradas: imagenes_eval[:2500],
-                y_deseada: clases_eval[:2500],
+                entradas: imagenes_eval[:3131],
+                y_deseada: clases_eval[:3131],
                 is_training: False#dont use dropout in Testing
             }
             print_write_validationSet(i, sess,resumen, acierto, feed_dictx, evalua_writer)
