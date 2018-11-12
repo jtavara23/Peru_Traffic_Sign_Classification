@@ -22,7 +22,7 @@ import analyseSignal as anaSig
 filePath = ""
 pastfilePath = ""
 clean = False
-
+modelType = ""
 
 def on_closing():
     if messagebox.askokcancel("Salir", "Desea salir?"):
@@ -80,16 +80,28 @@ def showImgProc():
 
     # win.mainloop()
 
+def markPeru():
+    global modelType
+    modelType = "Peru"
+    updateImage()
+
+def markAlem():
+    global modelType
+    modelType = "Alemania"
+    updateImage()
 
 def goQuery():
     global filePath
     global signalRecognized
     global clean
     global res
+    global modelType
 
     print("Ejecutando modelo convolucional")
-    signalRecognized = anaSig.runAnalyzer(filePath)
+    signalRecognized = anaSig.runAnalyzer(filePath, modelType)
+
     showImgProc()  #should be at the end? need to be tested in Windows
+
     if (clean):
         res.place(y=-80)
     else:
@@ -125,14 +137,20 @@ if __name__ == "__main__":
     la = Label(root, text="Ruta de Imagen: ", font=times2, background='white')
     la.place(x=10, y=30)
 
+    #---------------------------
+    peru = Button(root, text='Peru', command=lambda : markPeru())
+    peru.place(x=140, y=30)
+    alem = Button(root, text='Alemania', command=lambda : markAlem())
+    alem.place(x=180, y=30)
+    """
     bu = Button(
         root,
         text='Cargar Imagen',
         borderwidth=1,
         command=updateImage,
         highlightbackground='black')
-    bu.place(x=150, y=30)
-
+    bu.place(x=240, y=30)"""
+    #---------------------------
     pathText = Text(root, height=1, width=40)
     pathText.place(x=10, y=70)
 
@@ -145,7 +163,7 @@ if __name__ == "__main__":
     li = Label(root, image=img, background='black')
     li.place(x=350, y=0)
 
-    # ------------------
+    # -------RIGHT COLUMN-----------
 
     la2 = Label(root, text="BGR para RGB ►", font=times2, background='white')
     la2.place(x=390, y=50)
@@ -169,9 +187,9 @@ if __name__ == "__main__":
         text='Reconocer Señal',
         borderwidth=5,
         highlightbackground='black',
-        command=goQuery,
+        command=lambda : goQuery(),
         font=times1)
-    bu.place(x=70, y=450)
+    bu.place(x=70, y=455)
 
     root.protocol("WM_DELETE_WINDOW", on_closing)
     root.configure(background='white')
