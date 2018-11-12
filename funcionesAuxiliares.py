@@ -2,6 +2,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 import math
 import cv2
+import pandas as pd
+import confusion_matrix as confMat
+import seaborn as sns
 import pickle
 """
 
@@ -123,7 +126,8 @@ def plot_example_errors(cls_pred, correct, images, labels_flat):
 
 def plot_confusion_matrix(cls_pred, cls_true, num_classes):
     # This is called from print_test_accuracy() below.
-
+    signnames = pd.read_csv(
+        "../signals_database/traffic-signs-data/signnames.csv").values[:, 1]
     # cls_pred is an array of the predicted classifications for the test-set
 
     # cls_true is an array of the true classifications for the test-set
@@ -131,32 +135,44 @@ def plot_confusion_matrix(cls_pred, cls_true, num_classes):
     # Get the confusion matrix using sklearn.
     from sklearn.metrics import confusion_matrix
     cm = confusion_matrix(y_true=cls_true, y_pred=cls_pred)
-
+    cm_tot = cm
+    cm = np.round(cm.astype('float') / cm.sum(axis=1)[:, np.newaxis],2)
     # Print the confusion matrix as text.
     #print(cm)
 
     # Plot the confusion matrix as an image.
     #plt.matshow(cm)
-    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.figure(figsize = (27,27))
+    #cmao = Greens,Oranges,Blues, PuBu,Purples,Reds,GnBu
+    plt.imshow(cm, interpolation='nearest', cmap = plt.cm.Blues)
     plt.title("Matriz de Confusion")
-    plt.colorbar()
+    #plt.colorbar()
     tick_marks = np.arange(num_classes)
-    plt.xticks(tick_marks, range(num_classes), rotation=45)
-    plt.yticks(tick_marks, range(num_classes))
+
+    plt.xticks( range(num_classes), tick_marks)#, rotation=90)
+    plt.yticks( range(num_classes), tick_marks)
+    plt.xticks(fontsize = 6)
+    plt.yticks(fontsize = 6)
 
     thresh = cm.max() / 2.
     #cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
     import itertools
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        dato = str(cm[i, j]) #+ "\n" + str(cm_tot[i,j])
         plt.text(
             j,
             i,
-            cm[i, j],
+            dato,
+            linewidth=2,
+            fontsize=8,
             horizontalalignment="center",
+            #bbox=dict(facecolor='red', alpha=0.5),
             color="white" if cm[i, j] > thresh else "black")
 
-    plt.xlabel('Predecida')
-    plt.ylabel('Deseada')
+    plt.xlabel('Predecida', fontsize = 24)
+    plt.ylabel('Deseada', fontsize = 24)
+    plt.tight_layout()
+    plt.show()
 
 
 def plot_conv_weights(w, xs, ys, input_channel=0):
@@ -256,4 +272,190 @@ def plot_conv_layer(w, input_channel=0):
 
     # Ensure the plot is shown correctly with multiple plots
     # in a single Notebook cell.
+    plt.show()
+
+def plot_confusion_matrix_Large(cls_pred, cls_true, num_classes):
+    confMat._test_data_class( cls_true, cls_pred, num_classes)
+
+
+def plot_roc2(cls_pred,y_true, classes_to_plot=None, title='ROC Curves',
+                   plot_micro=True, plot_macro=True,
+                   ax=None, figsize=None, cmap='nipy_spectral',
+                   title_fontsize="large", text_fontsize="medium"):
+    """Generates the ROC curves from labels and predicted scores/probabilities
+    Args:
+        y_true (array-like, shape (n_samples)):
+            Ground truth (correct) target values.
+        cls_pred (array-like, shape (n_samples, n_classes)):
+            Prediction probabilities for each class returned by a classifier.
+        title (string, optional): Title of the generated plot. Defaults to
+            "ROC Curves".
+        plot_micro (boolean, optional): Plot the micro average ROC curve.
+            Defaults to ``True``.
+        plot_macro (boolean, optional): Plot the macro average ROC curve.
+            Defaults to ``True``.
+        classes_to_plot (list-like, optional): Classes for which the ROC
+            curve should be plotted. e.g. [0, 'cold']. If given class does not exist,
+            it will be ignored. If ``None``, all classes will be plotted. Defaults to
+            ``None``
+        ax (:class:`matplotlib.axes.Axes`, optional): The axes upon which to
+            plot the curve. If None, the plot is drawn on a new set of axes.
+        figsize (2-tuple, optional): Tuple denoting figure size of the plot
+            e.g. (6, 6). Defaults to ``None``.
+        cmap (string or :class:`matplotlib.colors.Colormap` instance, optional):
+            Colormap used for plotting the projection. View Matplotlib Colormap
+            documentation for available options.
+            https://matplotlib.org/users/colormaps.html
+        title_fontsize (string or int, optional): Matplotlib-style fontsizes.
+            Use e.g. "small", "medium", "large" or integer-values. Defaults to
+            "large".
+        text_fontsize (string or int, optional): Matplotlib-style fontsizes.
+            Use e.g. "small", "medium", "large" or integer-values. Defaults to
+            "medium".
+    Returns:
+        ax (:class:`matplotlib.axes.Axes`): The axes on which the plot was
+            drawn.
+    Example:
+        >>> import scikitplot as skplt
+        >>> nb = GaussianNB()
+        >>> nb = nb.fit(X_train, y_train)
+        >>> cls_pred = nb.predict_proba(X_test)
+        >>> skplt.metrics.plot_roc(y_test, cls_pred)
+        <matplotlib.axes._subplots.AxesSubplot object at 0x7fe967d64490>
+        >>> plt.show()
+        .. image:: _static/examples/plot_roc_curve.png
+           :align: center
+           :alt: ROC Curves
+    """
+
+    from sklearn.preprocessing import label_binarize
+    from sklearn.preprocessing import LabelEncoder
+    from sklearn.metrics import roc_curve
+    from sklearn.metrics import auc
+    from scipy import interp
+
+    y_true = np.array(y_true)
+    cls_pred = np.array(cls_pred)
+
+    classes = np.unique(y_true)
+    probas = cls_pred
+
+    if classes_to_plot is None:
+        classes_to_plot = classes
+
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
+
+    ax.set_title(title, fontsize=title_fontsize)
+
+    fpr_dict = dict()
+    tpr_dict = dict()
+
+    indices_to_plot = np.in1d(classes, classes_to_plot)
+    print("indices_to_plot ",indices_to_plot)
+    print("--------------")
+    print("probas:" , probas)
+    for i, to_plot in enumerate(indices_to_plot):
+        fpr_dict[i], tpr_dict[i], _ = roc_curve(y_true, probas[:, i],
+                                                pos_label=classes[i])
+        if to_plot:
+            roc_auc = auc(fpr_dict[i], tpr_dict[i])
+            color = plt.cm.get_cmap(cmap)(float(i) / len(classes))
+            ax.plot(fpr_dict[i], tpr_dict[i], lw=2, color=color,
+                    label='ROC curve of class {0} (area = {1:0.2f})'
+                          ''.format(classes[i], roc_auc))
+
+    if plot_micro:
+        binarized_y_true = label_binarize(y_true, classes=classes)
+        if len(classes) == 2:
+            binarized_y_true = np.hstack(
+                (1 - binarized_y_true, binarized_y_true))
+        fpr, tpr, _ = roc_curve(binarized_y_true.ravel(), probas.ravel())
+        roc_auc = auc(fpr, tpr)
+        ax.plot(fpr, tpr,
+                label='micro-average ROC curve '
+                      '(area = {0:0.2f})'.format(roc_auc),
+                color='deeppink', linestyle=':', linewidth=4)
+
+    if plot_macro:
+        # Compute macro-average ROC curve and ROC area
+        # First aggregate all false positive rates
+        all_fpr = np.unique(np.concatenate([fpr_dict[x] for x in range(len(classes))]))
+
+        # Then interpolate all ROC curves at this points
+        mean_tpr = np.zeros_like(all_fpr)
+        for i in range(len(classes)):
+            mean_tpr += interp(all_fpr, fpr_dict[i], tpr_dict[i])
+
+        # Finally average it and compute AUC
+        mean_tpr /= len(classes)
+        roc_auc = auc(all_fpr, mean_tpr)
+
+        ax.plot(all_fpr, mean_tpr,
+                label='macro-average ROC curve '
+                      '(area = {0:0.2f})'.format(roc_auc),
+                color='navy', linestyle=':', linewidth=4)
+
+    ax.plot([0, 1], [0, 1], 'k--', lw=2)
+    ax.set_xlim([0.0, 1.0])
+    ax.set_ylim([0.0, 1.05])
+    ax.set_xlabel('False Positive Rate', fontsize=text_fontsize)
+    ax.set_ylabel('True Positive Rate', fontsize=text_fontsize)
+    ax.tick_params(labelsize=text_fontsize)
+    ax.legend(loc='lower right', fontsize=text_fontsize)
+    plt.show()
+
+
+
+def plot_roc(cls_pred, cls_true, n_classes):
+    from sklearn.metrics import roc_curve,auc
+    from scipy import interp
+    from itertools import cycle
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+
+    pred_array = np.array(pd.get_dummies(cls_pred))
+    test_array = np.array(pd.get_dummies(cls_true))
+
+    for i in range(n_classes):
+        fpr[i], tpr[i], _ = roc_curve(test_array[:, i], pred_array[:, i])
+        roc_auc[i] = auc(fpr[i], tpr[i])
+        print(i," -> ",  fpr[i],"  |||| " ,tpr[i], " |||| ROC Area: ", roc_auc[i])
+        print("---------------------")
+
+    all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
+
+    mean_tpr = np.zeros_like(all_fpr)
+    for i in range(n_classes):
+        mean_tpr += interp(all_fpr, fpr[i], tpr[i])
+
+    mean_tpr /= n_classes
+
+    fpr["macro"] = all_fpr
+    tpr["macro"] = mean_tpr
+    roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+
+    lw=2
+    plt.figure(figsize=(12,12))
+    """
+    plt.plot(fpr["macro"], tpr["macro"],
+            label='macro-average ROC curve (area = {0:0.2f})'
+                ''.format(roc_auc["macro"]),
+            color='green', linestyle=':', linewidth=4)
+    """
+    colors = cycle(['aqua', 'darkorange', 'cornflowerblue', 'red', 'black', 'blue', 'brown', 'green'])
+    for i, color in zip(range(n_classes), colors):
+        plt.plot(fpr[i], tpr[i], color=color, lw=lw,
+                label='ROC curve of class {0} (area = {1:0.2f})'
+                ''.format(i, roc_auc[i]))
+
+    plt.plot([0, 1], [0, 1], 'k--',color='red', lw=lw)
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.annotate('Random Guess',(.5,.48),color='red')
+    plt.xlabel('Proporcion de Falsos Positivos (PFP)',fontsize=12)
+    plt.ylabel('Proporcion de Verdaderos Positivos (PVP)',fontsize=12)
+    plt.title('ESPACIO ROC')
+    plt.legend(loc="lower right")
     plt.show()
