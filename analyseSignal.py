@@ -15,15 +15,36 @@ from skimage import exposure
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # np.set_printoptions(threshold=np.nan)
 
-BATCH_SIZE = 421  # 421
 NOMBRE_TENSOR_ENTRADA = 'inputX'
 NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 NOMBRE_PROBABILIDAD = 'mantener_probabilidad'
-MODEL_PATH = 'models10extend/model1/'
-lastModelName = 'model-61760.meta'
 # important path to extract processed images
 PROCESSED_IMAGES_PATH = "imagenes/"
-NUM_TEST = 0
+#----------------------------
+CLASSES = 0
+RESIZE = 0
+MODEL_PATH = ""
+LAST_MODEL_NAME = ""
+#----------------------------
+
+
+def apply_configurations(modelType):
+    global RESIZE
+    global MODEL_PATH
+    global LAST_MODEL_NAME
+    global CLASSES
+    if(modelType == "Peru"):
+        print("Analysing Peruvian signal")
+        MODEL_PATH = 'models_Peru/model1/'
+        LAST_MODEL_NAME = 'model-7700.meta'
+        RESIZE = 60
+        CLASSES = 7
+    else:
+        print("Analysing German signal")
+        MODEL_PATH = 'models10extend/model1/'
+        LAST_MODEL_NAME = 'model-73340.meta'
+        RESIZE = 32
+        CLASSES = 43
 
 
 def read_image(imagen):
@@ -41,7 +62,7 @@ def read_image(imagen):
 def procesarIMG(name):
     img = cv2.imread(name)
 
-    img = cv2.resize(img, (32, 32))
+    img = cv2.resize(img, (RESIZE, RESIZE))
     cv2.imwrite(PROCESSED_IMAGES_PATH + 'a.jpg', img)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     cv2.imwrite(PROCESSED_IMAGES_PATH + 'b.jpg', img)
@@ -57,13 +78,17 @@ def procesarIMG(name):
     img2 = 0.299 * img2[:, :, 0] + 0.587 * img2[:, :, 1] + 0.114 * img2[:, :, 2]
     cv2.imwrite(PROCESSED_IMAGES_PATH + 'e.jpg', img2)
 
-    np.reshape(img, (1, 32, 32))
+    np.reshape(img, (1, RESIZE, RESIZE))
     #img = (img / 255.).astype(np.float32) done in CLAHE
     return img
 
 def getSignalName(index):
     outData = []
-    inputFile = open("imagenes/signnames.csv", "r")
+    global CLASSES
+    if(CLASSES == 43):
+        inputFile = open("imagenes/signnames.csv", "r")
+    else:
+        inputFile = open("imagenes/senalnames.csv", "r")
     for line in inputFile.readlines():
         data = [(x) for x in line.strip().split(",") if x != '']
         outData.append(data[1])
@@ -71,12 +96,14 @@ def getSignalName(index):
     return outData[index]
 
 
-def runAnalyzer(pathImage):
+def runAnalyzer(pathImage, modelType):
     print("Running session")
+    tf.reset_default_graph()
+    apply_configurations(modelType)
     with tf.Session() as sess:
         # Restore latest checkpoint
         sess.run(tf.global_variables_initializer())
-        saver = tf.train.import_meta_graph(MODEL_PATH + lastModelName)
+        saver = tf.train.import_meta_graph(MODEL_PATH + LAST_MODEL_NAME)
         ult_pto_control = tf.train.latest_checkpoint(MODEL_PATH + '.')
         saver.restore(sess, ult_pto_control)
         print("Modelo restaurado " + ult_pto_control)
@@ -93,7 +120,7 @@ def runAnalyzer(pathImage):
         # print img
         # """
         # ------------FIN DE PROCESAMIENTO DE IMAGEN------------
-        results = [0] * 43
+        results = [0] * CLASSES
         feed_dictx = {
             NOMBRE_TENSOR_ENTRADA + ":0": img,
             NOMBRE_PROBABILIDAD + ":0": False
@@ -108,7 +135,7 @@ def runAnalyzer(pathImage):
         #acc = sess.run(probabilidad, feed_dict=feed_dictx)
 
         print("Accuracy: ", acc[0][label_pred])
-        results = [(xx,acc[0][xx]) for xx in range(0,43)]
+        results = [(xx,acc[0][xx]) for xx in range(0,CLASSES)]
         #for  xx in range(0,43):
         #    results[xx] = (xx,acc[0][xx])
         #    #print("acc["+str(xx)+"]: ",acc[0][xx])
