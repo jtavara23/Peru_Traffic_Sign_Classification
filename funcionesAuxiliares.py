@@ -407,49 +407,62 @@ def plot_roc2(cls_pred,y_true, classes_to_plot=None, title='ROC Curves',
 
 
 
-def plot_roc(cls_pred, cls_true, n_classes):
+def plot_roc(cls_pred, cls_true, num_classes):
     from sklearn.metrics import roc_curve,auc
     from scipy import interp
     from itertools import cycle
-    fpr = dict()
-    tpr = dict()
+    PFP = dict()
+    PVP = dict()
     roc_auc = dict()
+    avg_PFP = avg_PVP = 0
 
     pred_array = np.array(pd.get_dummies(cls_pred))
     test_array = np.array(pd.get_dummies(cls_true))
 
-    for i in range(n_classes):
-        fpr[i], tpr[i], _ = roc_curve(test_array[:, i], pred_array[:, i])
-        roc_auc[i] = auc(fpr[i], tpr[i])
-        print(i," -> ",  fpr[i],"  |||| " ,tpr[i], " |||| ROC Area: ", roc_auc[i])
+    for i in range(num_classes):
+        PFP[i], PVP[i], _ = roc_curve(test_array[:, i], pred_array[:, i])
+        roc_auc[i] = auc(PFP[i], PVP[i])
+        avg_PFP += PFP[i]
+        avg_PVP += PVP[i]
+        print(i," -> ",  PFP[i],"  |||| " ,PVP[i], " |||| ROC Area: ", roc_auc[i])
         print("---------------------")
 
-    all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
+    print(" avg_PFP: ", (avg_PFP/num_classes)[1] ,"avg_PVP: " , (avg_PVP/num_classes)[1] )
+    #--------------------------------------------------------------------------
+    #Another evaluation measure for multi-class classification is macro-averaging,
+    #which gives equal weight to the classification of each label.
+    all_fpr = np.unique(np.concatenate([PFP[i] for i in range(num_classes)]))
+
+    #print("all_fpr",all_fpr)
+    #[0.00000000e+00 2.45158127e-04 2.49314385e-04 2.59336100e-04 5.45851528e-04 7.72996650e-04 1.00000000e+00]
 
     mean_tpr = np.zeros_like(all_fpr)
-    for i in range(n_classes):
-        mean_tpr += interp(all_fpr, fpr[i], tpr[i])
+    for i in range(num_classes):
+        mean_tpr += interp(all_fpr, PFP[i], PVP[i])
 
-    mean_tpr /= n_classes
 
-    fpr["macro"] = all_fpr
-    tpr["macro"] = mean_tpr
-    roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+    mean_tpr /= num_classes
+    #print("mean_tpr",mean_tpr)
+    #[0.28508217 0.81205758 0.81857359 0.82855115 0.95635019 0.99827774 1.   ]
 
+    PFP["macro"] = all_fpr
+    PVP["macro"] = mean_tpr
+    roc_auc["macro"] = auc(PFP["macro"], PVP["macro"])
+    #--------------------------------------------------------------------------
     lw=2
     plt.figure(figsize=(12,12))
     """
-    plt.plot(fpr["macro"], tpr["macro"],
-            label='macro-average ROC curve (area = {0:0.2f})'
+    plt.plot(PFP["macro"], PVP["macro"],
+            label='macro-average ROC curve (area = {0:0.3f})'
                 ''.format(roc_auc["macro"]),
             color='green', linestyle=':', linewidth=4)
     """
     colors = cycle(['aqua', 'darkorange', 'cornflowerblue', 'red', 'black', 'blue', 'brown', 'green'])
-    for i, color in zip(range(n_classes), colors):
-        plt.plot(fpr[i], tpr[i], color=color, lw=lw,
-                label='ROC curve of class {0} (area = {1:0.2f})'
+    for i, color in zip(range(num_classes), colors):
+        plt.plot(PFP[i], PVP[i], color=color, lw=lw,
+                label='ROC curve of class {0} (area = {1:0.5f})'
                 ''.format(i, roc_auc[i]))
-
+    #"""
     plt.plot([0, 1], [0, 1], 'k--',color='red', lw=lw)
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])

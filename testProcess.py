@@ -14,7 +14,7 @@ import sys
 
 """
 To execute run:
-    python testProcess.py [peru/german/german-ext] [type of Model] [numb Of Model] [show_result] [show_plots]
+    python testProcess.py [peru/german/german-ext] [type of Model] [numb Of Model] [show_confMatrix] [show_plots]
     Example: python testProcess.py peru model0 7700 true false
 """
 
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     typeOfSignal = str(sys.argv[1])
     modelo = str(sys.argv[2])
     model_number = str(sys.argv[3])
-    show_result = str(sys.argv[4]).lower()
+    show_confMatrix = str(sys.argv[4]).lower()
     show_plots = str(sys.argv[5]).lower()
 
     BATCH_SIZE = 2000
@@ -172,16 +172,16 @@ if __name__ == "__main__":
     acc = float(correct_sum) / cant_evaluar
 
     msg = "Acierto en el conjunto de Testing: {0:.2%} ({1} / {2})"
-    if(show_result == "true"):
-        print(msg.format(acc, correct_sum, cant_evaluar))
-        writeResults(msg.format(acc, correct_sum, cant_evaluar), test_file)
+    print(msg.format(acc, correct_sum, cant_evaluar))
+    writeResults(msg.format(acc, correct_sum, cant_evaluar), test_file)
+    if(show_confMatrix == "true"):
+        print("Mostrando Matriz de Confusion")
+        plot_confusion_matrix_Large(clases_pred, clases_deseadas,num_classes)
 
     if(show_plots == "true"):
+        plot_roc(clases_pred, clases_deseadas,num_classes)
+        plot_pr_curve(clases_pred, clases_deseadas,num_classes)
         # Muestra algunas imagenes que no fueron clasificadas correctamente
         #plot_example_errors(cls_pred=clases_pred, correct=correct,images = imagenes_eval, labels_flat=clases_eval_flat)
-        print("Mostrando Matriz de Confusion")
-        #plot_confusion_matrix_Large(clases_pred, clases_deseadas,num_classes)
-        plot_roc(clases_pred, clases_deseadas,2)
-        #plt.show()
 
     print("Fin de evaluacion")
