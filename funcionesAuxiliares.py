@@ -407,6 +407,72 @@ def plot_roc2(cls_pred,y_true, classes_to_plot=None, title='ROC Curves',
 
 
 
+def plot_pr_curve(y_score, Y_test, num_classes):
+     #The measure of quality of precision-recall curve is average precision.
+    #This average precision equals the exact area under not-interpolated (that is, piecewise constant) precision-recall curve.
+    from sklearn.metrics import precision_recall_curve
+    from sklearn.metrics import average_precision_score
+    from sklearn.utils.fixes import signature
+
+    #print(y_score)
+    y_score_oneHot = np.eye(num_classes,dtype=int)[y_score]
+    Y_test_oneHot = np.eye(num_classes,dtype=int)[Y_test]
+    """
+    for i in range(num_classes):
+        print(Y_test_oneHot[: , i])
+        print("----------")
+    """
+    # For each class
+    precision = dict()
+    recall = dict()
+    average_precision = dict()
+    for i in range(num_classes):
+        precision[i], recall[i], _ = precision_recall_curve(Y_test_oneHot[:,i],
+                                                            y_score_oneHot[:,i])
+        average_precision[i] = average_precision_score(Y_test_oneHot[:, i], y_score_oneHot[:, i])
+    #------------------------------------------------------------------------------------------
+    # A "micro-average": quantifying score on all classes jointly
+    precision["micro"], recall["micro"], _ = precision_recall_curve(Y_test_oneHot.ravel(),
+        y_score_oneHot.ravel())
+    average_precision["micro"] = average_precision_score(Y_test_oneHot, y_score_oneHot,
+                                                        average="micro")
+    print('Average precision score, micro-averaged over all classes: {0:0.2f}'
+        .format(average_precision["micro"]))
+    """
+    plt.step(recall['micro'], precision['micro'], color='b', alpha=0.2,
+         where='post')
+    # In matplotlib < 1.5, plt.fill_between does not have a 'step' argument
+    step_kwargs = ({'step': 'post'}
+               if 'step' in signature(plt.fill_between).parameters
+               else {})
+    plt.fill_between(recall["micro"], precision["micro"], alpha=0.2, color='b',
+                    **step_kwargs)
+    """
+    #------------------------------------------------------------------------------------------
+    plt.figure(figsize=(16,16))
+    from itertools import cycle
+    colors = cycle(['navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
+    for i, color in zip(range(num_classes), colors):
+        plt.plot(recall[i], precision[i], color=color, lw=2,
+        label='Precision-recall for class {0} (area = {1:0.3f})'
+                  ''.format(i, average_precision[i]))
+
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.ylim([0.0, 1.05])
+    plt.xlim([0.0, 1.0])
+    plt.title(
+        'Average precision score, micro-averaged over all classes: AP={0:0.2f}'
+        .format(average_precision["micro"]))
+    if(num_classes < 10):
+        plt.legend(loc="lower right")
+    else:
+        plt.legend(loc=(1.05,-.02))
+    plt.tight_layout()  #set layout slim
+    plt.show()
+    #"""
+
+
 def plot_roc(cls_pred, cls_true, num_classes):
     from sklearn.metrics import roc_curve,auc
     from scipy import interp

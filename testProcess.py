@@ -4,7 +4,7 @@ import pickle
 from pandas.io.parsers import read_csv
 from matplotlib import pyplot as plt
 import tensorflow as tf
-from funcionesAuxiliares import readData, plot_example_errors, plot_confusion_matrix_Large, plot_roc
+from funcionesAuxiliares import readData, plot_example_errors, plot_confusion_matrix_Large, plot_roc,plot_pr_curve
 import math
 import os
 import datetime
@@ -15,7 +15,9 @@ import sys
 """
 To execute run:
     python testProcess.py [peru/german/german-ext] [type of Model] [numb Of Model] [show_confMatrix] [show_plots]
-    Example: python testProcess.py peru model0 7700 true false
+    Examples:
+        python testProcess.py peru model7 7700 false true
+        python testProcess.py german model7 38700 false true
 """
 
 modelo = ""
@@ -173,7 +175,7 @@ if __name__ == "__main__":
 
     msg = "Acierto en el conjunto de Testing: {0:.2%} ({1} / {2})"
     print(msg.format(acc, correct_sum, cant_evaluar))
-    writeResults(msg.format(acc, correct_sum, cant_evaluar), test_file)
+    #writeResults(msg.format(acc, correct_sum, cant_evaluar), test_file)
     if(show_confMatrix == "true"):
         print("Mostrando Matriz de Confusion")
         plot_confusion_matrix_Large(clases_pred, clases_deseadas,num_classes)
