@@ -35,7 +35,7 @@ def apply_configurations(modelType):
     global CLASSES
     if(modelType == "Peru"):
         print("Analysing Peruvian signal")
-        MODEL_PATH = 'models_Peru/model1/'
+        MODEL_PATH = 'models_Peru/model7/'
         LAST_MODEL_NAME = 'model-7700.meta'
         RESIZE = 60
         CLASSES = 7
