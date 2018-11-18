@@ -8,4 +8,8 @@ __pycache__
 /modelsBalanced
 /models10extend
 /models_Peru
+/backlupModelsGerman
 ThesisCode.code-workspace
+trainProcess\.py
+
+trainModel0\.py
