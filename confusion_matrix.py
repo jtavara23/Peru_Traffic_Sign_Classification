@@ -125,9 +125,9 @@ def insert_totals(df_cm):
     sum_lin = []
     for item_line in df_cm.iterrows():
         sum_lin.append( item_line[1].sum() )
-    df_cm['sum_lin'] = sum_lin
+    df_cm['Prom.Des.'] = sum_lin
     sum_col.append(np.sum(sum_lin))
-    df_cm.loc['sum_col'] = sum_col
+    df_cm.loc['Prom.Pred.'] = sum_col
     #print ('\ndf_cm:\n', df_cm, '\n\b\n')
 #
 
@@ -167,8 +167,8 @@ def pretty_plot_confusion_matrix(df_cm, annot=True, cmap="Oranges", fmt='.2f', f
 
     #set ticklabels rotation
     if(num_classes < 10):
-        ax.set_xticklabels(ax.get_xticklabels(), rotation = 45, fontsize = 8)
-    ax.set_yticklabels(ax.get_yticklabels(), rotation = 25, fontsize = 8)
+        ax.set_xticklabels(ax.get_xticklabels(), rotation = 0, fontsize = 6)
+    ax.set_yticklabels(ax.get_yticklabels(), rotation = 45, fontsize = 6)
 
     # Turn off all the ticks
     for t in ax.xaxis.get_major_ticks():
@@ -262,7 +262,7 @@ def _test_data_class(y_test, predic, N_class):
         print("Dataset Aleman")
         cmap = 'Oranges'
         fz = 6
-        figsize=[22,34]
+        figsize=[18,15]
     plot_confusion_matrix_from_data(y_test, predic, num_classes,
       annot, cmap, fmt, fz, lw, cbar, figsize, show_null_values, pred_val_axis)
 #
