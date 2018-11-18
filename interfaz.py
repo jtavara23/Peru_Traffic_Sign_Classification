@@ -47,10 +47,10 @@ def updateImage():
         pastfilePath = filePath
 
     image = Image.open(filePath)
-    image = image.resize((320, 280), Image.ANTIALIAS)  # is (width,height)
+    image = image.resize((320, 320), Image.ANTIALIAS)  # is (width,height)
     img = ImageTk.PhotoImage(image)
     panel = Label(root, image=img, background='black')
-    panel.place(x=10, y=150)
+    panel.place(x=10, y=200)
     root.mainloop()
 
 
@@ -64,8 +64,8 @@ def showImgProc():
     lista_imagenes.append(Image.open(anaSig.PROCESSED_IMAGES_PATH + "d.jpg"))
     lista_imagenes.append(Image.open(anaSig.PROCESSED_IMAGES_PATH + "e.jpg"))
 
-    new_h = 130
-    new_w = 300
+    new_h = 170
+    new_w = 210
     pos = 25
     COLUMNS = 1
 
@@ -76,7 +76,7 @@ def showImgProc():
         tkimage = ImageTk.PhotoImage(resized)
         myvar = Label(root, image=tkimage)
         myvar.image = tkimage
-        myvar.grid(row=r, column=c, padx=565)
+        myvar.grid(row=r, column=c, padx=650)
 
     # win.mainloop()
 
@@ -106,13 +106,19 @@ def goQuery():
         res.place(y=-80)
     else:
         clean = True
+    senWord = Label(
+        root,
+        text="►► Señal :",
+        font=times4,
+        background='white')
+    senWord.place(x=270, y=720)
     res = Label(
         root,
-        text="Señal: ►►" + signalRecognized,
-        font=times3,
+        text=signalRecognized,
+        font=times5,
         background='white',
         fg='blue')
-    res.place(x=390, y=595)
+    res.place(x=400, y=720)
 
 
 # ---------------------------------------------------------------
@@ -120,28 +126,30 @@ if __name__ == "__main__":
 
     root = Tk()
     root.resizable(0, 0)
-    root.title('Reconocedor de Señales')
-    w = 900
-    h = 670
+    root.title('Reconocedor de Señales de Tránsito')
+    w = 910
+    h = 750
     x = 150
     y = 30
 
     signalRecognized = ""
     root.geometry("%dx%d+%d+%d" % (w, h, x, y))
 
-    times1 = font.Font(family='Times', size=14, weight='bold')
-    times2 = font.Font(family='Times', size=12, weight='bold', slant='italic')
-    times3 = font.Font(family='Times', size=16, weight='bold', slant='italic')
-    times3.configure(underline=True)
+    times1 = font.Font(family='Times', size=13, weight='bold')
+    times2 = font.Font(family='Helvetica', size=10, weight='bold')
+    times3 = font.Font(family='Times', size=12, weight='bold', slant='italic')
+    times4 = font.Font(family='Helvetica', size=12, weight='bold')
+    times5 = font.Font(family='Helvetica', size=13, weight='bold', slant='italic')
+    times5.configure(underline=True)
 
-    la = Label(root, text="Ruta de Imagen: ", font=times2, background='white')
-    la.place(x=10, y=30)
+    la = Label(root, text="Ruta de Imagen: ", font=times3, background='white')
+    la.place(x=10, y=70)
 
     #---------------------------
     peru = Button(root, text='Peru', command=lambda : markPeru())
-    peru.place(x=140, y=30)
+    peru.place(x=140, y=70)
     alem = Button(root, text='Alemania', command=lambda : markAlem())
-    alem.place(x=180, y=30)
+    alem.place(x=180, y=70)
     """
     bu = Button(
         root,
@@ -152,33 +160,38 @@ if __name__ == "__main__":
     bu.place(x=240, y=30)"""
     #---------------------------
     pathText = Text(root, height=1, width=40)
-    pathText.place(x=10, y=70)
+    pathText.place(x=10, y=110)
 
-    la = Label(root, text="Imagen:", font=times2, background='white')
-    la.place(x=10, y=120)
+    la = Label(root, text="Imagen:", font=times3, background='white')
+    la.place(x=10, y=175)
 
-    image = Image.open("imagenes/fondo.jpg")
-    image = image.resize((5, h), Image.ANTIALIAS)  # is (height, width)
-    img = ImageTk.PhotoImage(image)
+    imageVer = Image.open("imagenes/fondo.jpg")
+    imageHor = imageVer
+    imageVer = imageVer.resize((4, h-50), Image.ANTIALIAS)  # is (height, width)
+    imageHor = imageHor.resize((w, 3), Image.ANTIALIAS)  # is (height, width)
+    img = ImageTk.PhotoImage(imageVer)
     li = Label(root, image=img, background='black')
-    li.place(x=350, y=0)
+    li.place(x=380, y=0)
+    img = ImageTk.PhotoImage(imageHor)
+    li = Label(root, image=img, background='black')
+    li.place(x=0, y= h-50)
 
     # -------RIGHT COLUMN-----------
 
-    la2 = Label(root, text="BGR para RGB ►", font=times2, background='white')
-    la2.place(x=390, y=50)
+    la2 = Label(root, text="Tamaño Reducido ►", font=times2, background='white')
+    la2.place(x=460, y=70)
 
     la3 = Label(
-        root, text="Escala de Grises ►", font=times2, background='white')
-    la3.place(x=390, y=165)
+        root, text="Espacio BGR para RGB ►", font=times2, background='white')
+    la3.place(x=440, y=235)
 
     la4 = Label(
-        root, text="Escala de Grises2 ►", font=times2, background='white')
-    la4.place(x=390, y=310)
+        root, text="Equalizacion de Histograma ►", font=times2, background='white')
+    la4.place(x=410, y=430)
 
     la5 = Label(
-        root, text="Imagen Binarizada ►", font=times2, background='white')
-    la5.place(x=390, y=420)
+        root, text="Escala de Grises ►", font=times2, background='white')
+    la5.place(x=470, y=590)
 
     #------------------
     res = Label(root, text="Señal: ►►")
@@ -189,8 +202,8 @@ if __name__ == "__main__":
         highlightbackground='black',
         command=lambda : goQuery(),
         font=times1)
-    bu.place(x=70, y=455)
-
+    bu.place(x=85, y=585)
+    print("-----------")
     root.protocol("WM_DELETE_WINDOW", on_closing)
     root.configure(background='white')
     root.mainloop()
