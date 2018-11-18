@@ -405,74 +405,8 @@ def plot_roc2(cls_pred,y_true, classes_to_plot=None, title='ROC Curves',
     ax.legend(loc='lower right', fontsize=text_fontsize)
     plt.show()
 
-
-
-def plot_pr_curve(y_score, Y_test, num_classes):
-     #The measure of quality of precision-recall curve is average precision.
-    #This average precision equals the exact area under not-interpolated (that is, piecewise constant) precision-recall curve.
-    from sklearn.metrics import precision_recall_curve
-    from sklearn.metrics import average_precision_score
-    from sklearn.utils.fixes import signature
-
-    #print(y_score)
-    y_score_oneHot = np.eye(num_classes,dtype=int)[y_score]
-    Y_test_oneHot = np.eye(num_classes,dtype=int)[Y_test]
-    """
-    for i in range(num_classes):
-        print(Y_test_oneHot[: , i])
-        print("----------")
-    """
-    # For each class
-    precision = dict()
-    recall = dict()
-    average_precision = dict()
-    for i in range(num_classes):
-        precision[i], recall[i], _ = precision_recall_curve(Y_test_oneHot[:,i],
-                                                            y_score_oneHot[:,i])
-        average_precision[i] = average_precision_score(Y_test_oneHot[:, i], y_score_oneHot[:, i])
-    #------------------------------------------------------------------------------------------
-    # A "micro-average": quantifying score on all classes jointly
-    precision["micro"], recall["micro"], _ = precision_recall_curve(Y_test_oneHot.ravel(),
-        y_score_oneHot.ravel())
-    average_precision["micro"] = average_precision_score(Y_test_oneHot, y_score_oneHot,
-                                                        average="micro")
-    print('Average precision score, micro-averaged over all classes: {0:0.2f}'
-        .format(average_precision["micro"]))
-    """
-    plt.step(recall['micro'], precision['micro'], color='b', alpha=0.2,
-         where='post')
-    # In matplotlib < 1.5, plt.fill_between does not have a 'step' argument
-    step_kwargs = ({'step': 'post'}
-               if 'step' in signature(plt.fill_between).parameters
-               else {})
-    plt.fill_between(recall["micro"], precision["micro"], alpha=0.2, color='b',
-                    **step_kwargs)
-    """
-    #------------------------------------------------------------------------------------------
-    plt.figure(figsize=(16,16))
-    from itertools import cycle
-    colors = cycle(['navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
-    for i, color in zip(range(num_classes), colors):
-        plt.plot(recall[i], precision[i], color=color, lw=2,
-        label='Precision-recall for class {0} (area = {1:0.3f})'
-                  ''.format(i, average_precision[i]))
-
-    plt.xlabel('Recall')
-    plt.ylabel('Precision')
-    plt.ylim([0.0, 1.05])
-    plt.xlim([0.0, 1.0])
-    plt.title(
-        'Average precision score, micro-averaged over all classes: AP={0:0.2f}'
-        .format(average_precision["micro"]))
-    if(num_classes < 10):
-        plt.legend(loc="lower right")
-    else:
-        plt.legend(loc=(1.05,-.02))
-    plt.tight_layout()  #set layout slim
-    plt.show()
-    #"""
-
-
+#------------------------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def plot_roc(cls_pred, cls_true, num_classes):
     from sklearn.metrics import roc_curve,auc
     from scipy import interp
@@ -490,10 +424,9 @@ def plot_roc(cls_pred, cls_true, num_classes):
         roc_auc[i] = auc(PFP[i], PVP[i])
         avg_PFP += PFP[i]
         avg_PVP += PVP[i]
-        print(i," -> ",  PFP[i],"  |||| " ,PVP[i], " |||| ROC Area: ", roc_auc[i])
-        print("---------------------")
-
-    print(" avg_PFP: ", (avg_PFP/num_classes)[1] ,"avg_PVP: " , (avg_PVP/num_classes)[1] )
+        #print(i," -> ",  PFP[i],"  |||| " ,PVP[i], " |||| ROC Area: ", roc_auc[i])
+        #print("---------------------")
+    print("avg_PFP: ", (avg_PFP/num_classes)[1] ," -> avg PVN:",1-((avg_PFP/num_classes)[1]),"  |||  avg_PVP: " , (avg_PVP/num_classes)[1] )
     #--------------------------------------------------------------------------
     #Another evaluation measure for multi-class classification is macro-averaging,
     #which gives equal weight to the classification of each label.
@@ -516,25 +449,112 @@ def plot_roc(cls_pred, cls_true, num_classes):
     roc_auc["macro"] = auc(PFP["macro"], PVP["macro"])
     #--------------------------------------------------------------------------
     lw=2
-    plt.figure(figsize=(12,12))
+    plt.figure(figsize=(13,13))
     """
     plt.plot(PFP["macro"], PVP["macro"],
             label='macro-average ROC curve (area = {0:0.3f})'
                 ''.format(roc_auc["macro"]),
             color='green', linestyle=':', linewidth=4)
     """
-    colors = cycle(['aqua', 'darkorange', 'cornflowerblue', 'red', 'black', 'blue', 'brown', 'green'])
-    for i, color in zip(range(num_classes), colors):
-        plt.plot(PFP[i], PVP[i], color=color, lw=lw,
-                label='ROC curve of class {0} (area = {1:0.5f})'
+    print('AUC-ROC: {0:0.4f}'
+        .format(roc_auc["macro"]))
+    lines = cycle(['-', '--', '-.', ':'])
+    colors = cycle(['aqua', 'cornflowerblue', 'red', 'darkorange', 'black', 'blue', 'brown', 'green','navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
+    for i, color, line in zip(range(num_classes), colors, lines):
+        plt.plot(PFP[i], PVP[i], color=color, lw=lw, linestyle=line,
+                label='ROC curve para la clase {0} (AUC ROC = {1:0.4f})'
                 ''.format(i, roc_auc[i]))
     #"""
-    plt.plot([0, 1], [0, 1], 'k--',color='red', lw=lw)
+    plt.plot([0, 1], [0, 1], 'k--',color='gray', lw=lw)
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
-    plt.annotate('Random Guess',(.5,.48),color='red')
-    plt.xlabel('Proporcion de Falsos Positivos (PFP)',fontsize=12)
-    plt.ylabel('Proporcion de Verdaderos Positivos (PVP)',fontsize=12)
-    plt.title('ESPACIO ROC')
-    plt.legend(loc="lower right")
-    plt.show()
+    plt.annotate('Suposicion Aleatoria',(.5,.48),color='gray')
+    plt.xlabel('Proporción de Falsos Positivos (PFP)',fontsize=12)
+    plt.ylabel('Proporción de Verdaderos Positivos (PVP)',fontsize=12)
+    plt.title('Curvas ROC - AUC={0:0.4f}'
+        .format(roc_auc["macro"]))
+    if(num_classes < 10):
+        plt.legend(loc="lower right")
+    else:
+        plt.legend(loc=(1.05,-.02))
+    plt.tight_layout()  #set layout slim
+#------------------------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
+
+def plot_pr_curve(y_score, Y_test, num_classes):
+     #The measure of quality of precision-recall curve is average precision.
+    #This average precision equals the exact area under not-interpolated (that is, piecewise constant) precision-recall curve.
+    from sklearn.metrics import precision_recall_curve
+    from sklearn.metrics import average_precision_score
+    from sklearn.utils.fixes import signature
+
+    #print(y_score)
+    y_score_oneHot = np.eye(num_classes,dtype=int)[y_score]
+    Y_test_oneHot = np.eye(num_classes,dtype=int)[Y_test]
+    """
+    for i in range(num_classes):
+        print(Y_test_oneHot[: , i])
+        print("----------")
+    """
+    # For each class
+    avg_precision = 0
+    precision = dict()
+    recall = dict()
+    average_precision_recall = dict()
+    for i in range(num_classes):
+        precision[i], recall[i], _ = precision_recall_curve(Y_test_oneHot[:,i],
+                                                            y_score_oneHot[:,i])
+        average_precision_recall[i] = average_precision_score(Y_test_oneHot[:, i], y_score_oneHot[:, i])
+        #print(precision[i], " and ", average_precision_recall[i])
+        if(len(precision[i]) == 2):
+            avg_precision += precision[i][0]
+        else:
+            avg_precision += precision[i][1]
+    #------------------------------------------------------------------------------------------
+    # A "micro-average": quantifying score on all classes jointly
+    #  A "macro-average": Calculate metrics for each label, and find their unweighted mean. This does not take label imbalance into account.
+
+    average_precision_recall["micro"] = average_precision_score(Y_test_oneHot, y_score_oneHot,
+                                                        average="micro")
+    print("--------------------")
+    print('macro-promedio en todas las clases, AUC-PR=: {0:0.4f}'
+        .format(average_precision_recall["micro"]))
+    print('PPV (precision): ',avg_precision/num_classes)
+    print("--------------------")
+    """
+    precision["macro"], recall["macro"], _ = precision_recall_curve(Y_test_oneHot.ravel(),
+        y_score_oneHot.ravel())
+    plt.step(recall['micro'], precision['micro'], color='b', alpha=0.2,
+         where='post')
+    # In matplotlib < 1.5, plt.fill_between does not have a 'step' argument
+    step_kwargs = ({'step': 'post'}
+               if 'step' in signature(plt.fill_between).parameters
+               else {})
+    plt.fill_between(recall["micro"], precision["micro"], alpha=0.2, color='b',
+                    **step_kwargs)
+    """
+    #------------------------------------------------------------------------------------------
+    plt.figure(figsize=(13,13))
+
+    from itertools import cycle
+    lines = cycle(['-', '--', '-.', ':'])
+    colors = cycle(['aqua', 'darkorange', 'cornflowerblue', 'red', 'black', 'blue', 'brown', 'green','navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
+
+    for i, color, line in zip(range(num_classes), colors, lines):
+        plt.plot(recall[i], precision[i], color=color, lw=2, linestyle=line,
+        label='Precision-recall para la clase {0} (AUC-PR = {1:0.3f})'
+                  ''.format(i, average_precision_recall[i]))
+
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.ylim([0.0, 1.05])
+    plt.xlim([0.0, 1.0])
+    plt.title(
+        'Curvas Precision - Recall, AUC={0:0.4f}'
+        .format(average_precision_recall["micro"]))
+    if(num_classes < 10):
+        plt.legend(loc="lower left")
+    else:
+        plt.legend(loc=(1.05,-.02))
+    plt.tight_layout()  #set layout slim
+    #"""

@@ -16,7 +16,7 @@ import sys
 To execute run:
     python testProcess.py [peru/german/german-ext] [type of Model] [numb Of Model] [show_confMatrix] [show_plots]
     Examples:
-        python testProcess.py peru model7 7700 false true
+        python testProcess.py peru model7 7700 false false
         python testProcess.py german model7 38700 false true
 """
 
@@ -180,10 +180,13 @@ if __name__ == "__main__":
         print("Mostrando Matriz de Confusion")
         plot_confusion_matrix_Large(clases_pred, clases_deseadas,num_classes)
 
+    plot_roc(clases_pred, clases_deseadas,num_classes)
     if(show_plots == "true"):
-        plot_roc(clases_pred, clases_deseadas,num_classes)
-        plot_pr_curve(clases_pred, clases_deseadas,num_classes)
-        # Muestra algunas imagenes que no fueron clasificadas correctamente
-        #plot_example_errors(cls_pred=clases_pred, correct=correct,images = imagenes_eval, labels_flat=clases_eval_flat)
+        plt.show()
+    plot_pr_curve(clases_pred, clases_deseadas,num_classes)
+    if(show_plots == "true"):
+        plt.show()
+    # Muestra algunas imagenes que no fueron clasificadas correctamente
+    #plot_example_errors(cls_pred=clases_pred, correct=correct,images = imagenes_eval, labels_flat=clases_eval_flat)
 
     print("Fin de evaluacion")
