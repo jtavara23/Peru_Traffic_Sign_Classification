@@ -25,6 +25,7 @@ CLASSES = 0
 RESIZE = 0
 MODEL_PATH = ""
 LAST_MODEL_NAME = ""
+TRESHOLD = 0.6
 #----------------------------
 
 
@@ -42,6 +43,7 @@ def apply_configurations(modelType):
     else:
         print("Analysing German signal")
         MODEL_PATH = 'models10extend/model1/'
+        #MODEL_PATH = 'modelsBalanced/model7/'
         LAST_MODEL_NAME = 'model-73340.meta'
         RESIZE = 32
         CLASSES = 43
@@ -97,7 +99,7 @@ def getSignalName(index):
 
 
 def runAnalyzer(pathImage, modelType):
-    print("Running session")
+    print("Session iniciada")
     tf.reset_default_graph()
     apply_configurations(modelType)
     with tf.Session() as sess:
@@ -128,20 +130,26 @@ def runAnalyzer(pathImage, modelType):
 
         # Calcula la clase usando el predictor de nuestro modelo
         label_pred = sess.run(predictor, feed_dict=feed_dictx)
-        print("Signal: ", label_pred)
+        print("Señal: ", label_pred)
 
         # cualquiera es igual
         acc= probabilidad.eval(feed_dict = feed_dictx)
         #acc = sess.run(probabilidad, feed_dict=feed_dictx)
-
-        print("Accuracy: ", acc[0][label_pred])
+        percentageAcc = float(acc[0][label_pred])
+        print("Accuracy: ", str(percentageAcc))
         results = [(xx,acc[0][xx]) for xx in range(0,CLASSES)]
         #for  xx in range(0,43):
         #    results[xx] = (xx,acc[0][xx])
         #    #print("acc["+str(xx)+"]: ",acc[0][xx])
         results = list(reversed(sorted(results, key=lambda tup:tup[1])))
         print(results[:5])
-        return getSignalName(np.asscalar(label_pred))
+        if(percentageAcc > TRESHOLD):
+            resultado = getSignalName(np.asscalar(label_pred)) + " [{0:0.2f}%]".format(percentageAcc*100.0)
+            print(resultado)
+            return resultado
+        else:
+            print("Señal de Tránsito Desconocida")
+            return "No Reconocida. [0%]"
 
 
 # if __name__ == "__main__":
