@@ -44,7 +44,7 @@ IMAGE_SHAPE = 0  #(32,32,1)
 BATCH_SIZE = 305
 ITER_PER_EPOCA =  77  # = (23485 / 427)
 
-EPOCS = 50
+EPOCS = 100
 #ITERACIONES_ENTRENAMIENTO: (ITER_PER_EPOCA * EPOCS)
 ITERACIONES_ENTRENAMIENTO = ITER_PER_EPOCA * EPOCS
 
@@ -386,7 +386,7 @@ def create_cnn():
             error = cross_entropy_mean
     #---------------------------------------------------------------------------
     with tf.device('/GPU:0'):
-        with tf.name_scope("entrenamiento"):
+        with tf.name_scope("Entrenamiento"):
             #Funcion de optimizacion
             iterac_entren = tf.Variable(0, name='iterac_entren', trainable=False)
             #A las 15 iteraciones se cambio el (iterperepoca *5) -> (iterperepoca)
@@ -399,7 +399,7 @@ def create_cnn():
             #optimizador = tf.train.AdamOptimizer(TASA_APRENDIZAJE).minimize(error, global_step=iterac_entren)
             optimizador = tf.train.AdamOptimizer(lr).minimize(error, global_step=iterac_entren)
     with tf.device('/GPU:0'):
-        with tf.name_scope("Evaluacion"):
+        with tf.name_scope("Validacion"):
             # evaluacion
             prediccion_correcta = tf.equal(
                 tf.argmax(y_calculada, 1), tf.argmax(y_deseada, 1))
@@ -503,7 +503,7 @@ if __name__ == "__main__":
     #--------------------------------CREACION DE LA RED------------------------------------------------
     print("Inicio de creacion de la red")
     #tf.reset_default_graph()
-    with tf.Graph().as_default(), tf.device('/cpu:0'):
+    with tf.Graph().as_default():
         #sess = tf.Session()
 
         # Start running operations on the Graph. allow_soft_placement must be set to

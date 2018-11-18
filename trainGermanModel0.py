@@ -44,11 +44,11 @@ IMAGE_SHAPE = 0  #(32,32,1)
 BATCH_SIZE = 525
 ITER_PER_EPOCA = 387  # = (203175 / 525)
 
-EPOCS = 100
+EPOCS = 50
 #ITERACIONES_ENTRENAMIENTO: (ITER_PER_EPOCA * EPOCS)
 ITERACIONES_ENTRENAMIENTO = ITER_PER_EPOCA * EPOCS
 
-CHKP_GUARDAR_MODELO = ITER_PER_EPOCA * 5
+CHKP_GUARDAR_MODELO = ITER_PER_EPOCA * 10
 CHKP_REVISAR_PROGRESO = 129
 
 LEARNING_DECAY = True
@@ -366,48 +366,45 @@ def create_cnn():
     tf.summary.histogram('activations', y_calculada)
 
     #--------------------------------------------------------------------------
-    with tf.device('/GPU:0'):
-        with tf.name_scope("Regular_Loss"):
-            #softmax_cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            #    logits=capa_fc2, labels=y_deseada)
-            softmax_cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(
-                logits=capa_fc2, labels=y_deseada)
+    with tf.name_scope("Regular_Loss"):
+        #softmax_cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+        #    logits=capa_fc2, labels=y_deseada)
+        softmax_cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(
+            logits=capa_fc2, labels=y_deseada)
 
-            cross_entropy_mean = tf.reduce_mean(softmax_cross_entropy, name="error")
-            tf.summary.scalar('cross_entropy', cross_entropy_mean)
-        if(L2_REG):
-            with tf.name_scope("L2_Regularization_Method"):
-                regularizers = (tf.nn.l2_loss(pesos_conv1) + tf.nn.l2_loss(pesos_conv2) +
-                                #tf.nn.l2_loss(pesos_conv3) + tf.nn.l2_loss(pesos_fc1) +
-                                tf.nn.l2_loss(pesos_fc2))
-                error =  cross_entropy_mean + L2_lambda * regularizers
-                tf.summary.scalar('error_Acc', error)
-        else:
-            error = cross_entropy_mean
+        cross_entropy_mean = tf.reduce_mean(softmax_cross_entropy, name="error")
+        tf.summary.scalar('cross_entropy', cross_entropy_mean)
+    if(L2_REG):
+        with tf.name_scope("L2_Regularization_Method"):
+            regularizers = (tf.nn.l2_loss(pesos_conv1) + tf.nn.l2_loss(pesos_conv2) +
+                            #tf.nn.l2_loss(pesos_conv3) + tf.nn.l2_loss(pesos_fc1) +
+                            tf.nn.l2_loss(pesos_fc2))
+            error =  cross_entropy_mean + L2_lambda * regularizers
+            tf.summary.scalar('error_Acc', error)
+    else:
+        error = cross_entropy_mean
     #---------------------------------------------------------------------------
-    with tf.device('/GPU:0'):
-        with tf.name_scope("entrenamiento"):
-            #Funcion de optimizacion
-            iterac_entren = tf.Variable(0, name='iterac_entren', trainable=False)
-            #A las 15 iteraciones se cambio el (iterperepoca *5) -> (iterperepoca)
-            if LEARNING_DECAY:
-                lr = tf.train.exponential_decay(TASA_APRENDIZAJE, iterac_entren, ITER_PER_EPOCA, DECAY_RATE, staircase=True, name='ExponentialDecay')
-                tf.summary.scalar('learning_rate_decay',lr)
-            else:
-                lr = TASA_APRENDIZAJE
-                tf.summary.scalar('learning_rate',lr)
-            #optimizador = tf.train.AdamOptimizer(TASA_APRENDIZAJE).minimize(error, global_step=iterac_entren)
-            optimizador = tf.train.AdamOptimizer(lr).minimize(error, global_step=iterac_entren)
-    with tf.device('/GPU:0'):
-        with tf.name_scope("Evaluacion"):
-            # evaluacion
-            prediccion_correcta = tf.equal(
-                tf.argmax(y_calculada, 1), tf.argmax(y_deseada, 1))
-            acierto = tf.reduce_mean(tf.cast(prediccion_correcta, 'float'))
-            tf.add_to_collection("mean_acc", acierto)
-            tf.summary.scalar("acierto", acierto)
+    with tf.name_scope("Entrenamiento"):
+        #Funcion de optimizacion
+        iterac_entren = tf.Variable(0, name='iterac_entren', trainable=False)
+        #A las 15 iteraciones se cambio el (iterperepoca *5) -> (iterperepoca)
+        if LEARNING_DECAY:
+            lr = tf.train.exponential_decay(TASA_APRENDIZAJE, iterac_entren, ITER_PER_EPOCA, DECAY_RATE, staircase=True, name='ExponentialDecay')
+            tf.summary.scalar('learning_rate_decay',lr)
+        else:
+            lr = TASA_APRENDIZAJE
+            tf.summary.scalar('learning_rate',lr)
+        #optimizador = tf.train.AdamOptimizer(TASA_APRENDIZAJE).minimize(error, global_step=iterac_entren)
+        optimizador = tf.train.AdamOptimizer(lr).minimize(error, global_step=iterac_entren)
+    with tf.name_scope("Validacion"):
+        # evaluacion
+        prediccion_correcta = tf.equal(
+            tf.argmax(y_calculada, 1), tf.argmax(y_deseada, 1))
+        acierto = tf.reduce_mean(tf.cast(prediccion_correcta, 'float'))
+        tf.add_to_collection("mean_acc", acierto)
+        tf.summary.scalar("acierto", acierto)
 
-        resumen = tf.summary.merge_all()
+    resumen = tf.summary.merge_all()
 
     tam_filtro = [tam_filtro1,tam_filtro2]
     num_filtro = [num_filtro1,num_filtro2]
