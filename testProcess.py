@@ -16,7 +16,7 @@ import sys
 To execute run:
     python testProcess.py [peru/german/german-ext] [type of Model] [numb Of Model] [show_confMatrix] [show_plots]
     Examples:
-        python testProcess.py peru model7 7700 false false
+        python testProcess.py peru modelA 7700 false false
         python testProcess.py german model7 38700 false true
 """
 
