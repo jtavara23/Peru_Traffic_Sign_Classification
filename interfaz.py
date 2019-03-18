@@ -32,26 +32,30 @@ def on_closing():
 def updateImage():
     global filePath
     global pastfilePath
+    imgIsSelected = True
 
     if (filePath == pastfilePath):
         # don't override the built-in file class
         filePath = filedialog.askopenfilename()
-        pastfilePath = filePath
-        print("Imagem procurada: " + filePath)
-        pathText.delete('1.0', END)
-        #queryText.delete('1.0', END)
-        # pathText -> just for the view
-        pathText.insert(INSERT, ".." + filePath[-28:])
+        if not filePath:
+            imgIsSelected = False
+        else:
+            print("Imagem procurada: " + filePath)
+            pathText.delete('1.0', END)
+            #queryText.delete('1.0', END)
+            # pathText -> just for the view
+            pathText.insert(INSERT, ".." + filePath[-28:])
     else:
         print("Nueva ruta: ", filePath)
-        pastfilePath = filePath
+    pastfilePath = filePath
 
-    image = Image.open(filePath)
-    image = image.resize((320, 320), Image.ANTIALIAS)  # is (width,height)
-    img = ImageTk.PhotoImage(image)
-    panel = Label(root, image=img, background='black')
-    panel.place(x=10, y=200)
-    root.mainloop()
+    if imgIsSelected:
+        image = Image.open(filePath)
+        image = image.resize((320, 320), Image.ANTIALIAS)  # is (width,height)
+        img = ImageTk.PhotoImage(image)
+        panel = Label(root, image=img, background='black')
+        panel.place(x=10, y=200)
+        root.mainloop()
 
 
 def showImgProc():
