@@ -22,9 +22,9 @@ To execute run:
 
 modelo = ""
 model_number = ""
-#tensorboard --logdir modelsBalanced/model1/
+#tensorboard --logdir=modelsBalanced/modelA/ --host=127.0.0.1
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2's
 np.set_printoptions(threshold=np.nan)
 
 NUM_TEST = 0
