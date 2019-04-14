@@ -4,8 +4,11 @@
 To execute run:
     python testProcess.py [peru/german/german-ext] [type of Model] [numb Of Model] [show_confMatrix] [show_plots]
     Examples:
-        python testProcess.py peru modelA 7700 false false
-        python testProcess.py german model7 38700 false true
+       > python testProcess.py peru modelA 7700 false false
+       > python testProcess.py german model7 38700 false true
+
+For tensorboard run:
+    > tensorboard --logdir=modelsBalanced/modelA/ --host=127.0.0.1
 """
 # Depening on run command it test:
 # test_file = '../signals_database/traffic-signs-data/test_2Processed.p'
@@ -28,9 +31,9 @@ import sys
 
 modelo = ""
 model_number = ""
-#tensorboard --logdir=modelsBalanced/modelA/ --host=127.0.0.1
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2's
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 np.set_printoptions(threshold=np.nan)
 
 NUM_TEST = 0
