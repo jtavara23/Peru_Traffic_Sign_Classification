@@ -2,6 +2,7 @@
 __pycache__
 *.ini
 *.log
+.idea
 /modelsBalanced
 /models10extend
 /models_Peru
