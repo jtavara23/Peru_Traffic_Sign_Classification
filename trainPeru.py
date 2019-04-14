@@ -1,6 +1,8 @@
-#agrego RELU en convoluciones
-#batch size aumento'
-# COn augment Data
+#-------------------------------------
+# Train File for Peru Images
+# It works from Model B to Model E
+# It uses train5_split_50 & validation5_split_50 (unsorted)
+#-------------------------------------
 import pickle
 from pandas.io.parsers import read_csv
 import random

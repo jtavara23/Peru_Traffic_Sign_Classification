@@ -1,3 +1,7 @@
+#-------------------------------------
+# Augment Process for German Signs
+# It uses 5 from 5 Image Techniques
+#-------------------------------------
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
@@ -830,7 +834,7 @@ if __name__ == "__main__":
     #-------------------------PROCESS FILES 4th step------------------------------------------
     #convertToGrayScale(train_extended_balanced_file,train_processed_balanced_file)
     #convertToGrayScale(train_extended_file,train_processed_file)
-    #convertToGrayScale(test_normalized_file,test_processed_file)#only this was executed 2nd and then the flip
+    #convertToGrayScale(test_normalized_file,test_processed_file)#Original and final Test File
     #-----------------------------------------------------------------------------
 
     #-------JUST FOR CONFIRMATION ON THE TESTING PHASE-------------------------------

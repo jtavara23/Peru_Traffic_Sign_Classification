@@ -1,3 +1,18 @@
+#-------------------------------------
+# Test File for German and Peru Images
+"""
+To execute run:
+    python testProcess.py [peru/german/german-ext] [type of Model] [numb Of Model] [show_confMatrix] [show_plots]
+    Examples:
+        python testProcess.py peru modelA 7700 false false
+        python testProcess.py german model7 38700 false true
+"""
+# Depening on run command it test:
+# test_file = '../signals_database/traffic-signs-data/test_2Processed.p'
+# test_file = '../signals_database/traffic-signs-data/test_5ExtendedProcessed.p
+# test_file = '../signals_database/peru-signs-data/pickleFiles/test_1Processed.p' from : (validation_test_5_split_50)
+#-------------------------------------
+
 import numpy as np
 import pandas as pd
 import pickle
@@ -10,15 +25,6 @@ import os
 import datetime
 import sys
 #from keras.backend import manual_variable_initialization as ke
-
-
-"""
-To execute run:
-    python testProcess.py [peru/german/german-ext] [type of Model] [numb Of Model] [show_confMatrix] [show_plots]
-    Examples:
-        python testProcess.py peru modelA 7700 false false
-        python testProcess.py german model7 38700 false true
-"""
 
 modelo = ""
 model_number = ""

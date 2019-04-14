@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+#-------------------------------------
+# Confusion Matrix generator file
+#-------------------------------------
 """
 plot a pretty confusion matrix with seaborn
 Created on Mon Jun 25 14:17:37 2018

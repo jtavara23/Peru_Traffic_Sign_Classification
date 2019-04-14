@@ -1,3 +1,6 @@
+#-------------------------------------
+# Helper file for Analyzing Plotting
+#-------------------------------------
 import numpy as np
 from matplotlib import pyplot as plt
 import math

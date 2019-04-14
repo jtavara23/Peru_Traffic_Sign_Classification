@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+#-------------------------------------
+# Intefarce program to recognize German and Peru Traffic Signs
+#-------------------------------------
 import io
 import sys
 import os

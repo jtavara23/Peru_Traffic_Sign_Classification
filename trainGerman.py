@@ -1,6 +1,8 @@
-#agrego RELU en convoluciones
-#batch size aumento'
-# COn augment Data
+#-------------------------------------
+# Train File for German Images
+# It works only from Model B to E
+# It uses train5_split_balanced & validation5_split_balanced (both unsorted)
+#-------------------------------------
 import pickle
 from pandas.io.parsers import read_csv
 import random

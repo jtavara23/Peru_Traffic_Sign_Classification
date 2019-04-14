@@ -1,3 +1,7 @@
+#-------------------------------------
+# Augment Process for Peru Signs
+# It uses 4 from 5 Image Techniques(No flipping)
+#-------------------------------------
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
