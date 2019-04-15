@@ -50,26 +50,6 @@ validation_split_file = '../signals_database/peru-signs-data/pickleFiles/validat
 test_processed_file = '../signals_database/peru-signs-data/pickleFiles/test_1Processed.p'  #sorted and ready for testing [not augmented]
 
 #======================================================================================================
-# Classes of signs that, when flipped horizontally, should still be classified as the same class
-self_flippable_horizontally = np.array(
-    [11, 12, 13, 15, 17, 18, 22, 26, 30, 35])
-# Classes of signs that, when flipped vertically, should still be classified as the same class
-self_flippable_vertically = np.array([1, 5, 12, 15, 17])
-# Classes of signs that, when flipped horizontally and then vertically, should still be classified as the same class
-self_flippable_both = np.array([32, 40])
-# Classes of signs that, when flipped horizontally, would still be meaningful, but should be classified as some other class
-cross_flippable = np.array([
-    [19, 20],
-    [33, 34],
-    [36, 37],
-    [38, 39],
-    [20, 19],
-    [34, 33],
-    [37, 36],
-    [39, 38],
-])
-
-#======================================================================================================
 
 
 def ordenar(X_data, y_data, class_counts):
@@ -124,106 +104,6 @@ def save_data(file, path):
 #----------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------
-
-
-def flip_extend(X, y):
-    """
-    Extends existing images dataset by flipping images of some classes. As some images would still belong
-    to same class after flipping we extend such classes with flipped images. Images of other would toggle
-    between two classes when flipped, so for those we extend existing datasets as well.
-
-    Parameters
-    ----------
-    X       : ndarray
-              Dataset array containing feature examples.
-    y       : ndarray, optional, defaults to `None`
-              Dataset labels in index form.
-
-    Returns
-    -------
-    A tuple of X and y.
-    """
-
-    X_extended = np.empty(
-        [0, X.shape[1], X.shape[2], X.shape[3]], dtype=X.dtype)
-    y_extended = np.empty([0], dtype=y.dtype)
-
-    for c in range(NUM_CLASSES):
-        # First copy existing data for this class
-        X_extended = np.append(X_extended, X[y == c], axis=0)
-        # If we can flip images of this class horizontally and they would still belong to said class...
-        if c in self_flippable_horizontally:
-            # ...Copy their flipped versions into extended array.
-            X_extended = np.append(
-                X_extended, X[y == c][:, :, ::-1, :], axis=0)
-        # If we can flip images of this class horizontally and they would belong to other class...
-        if c in cross_flippable[:, 0]:
-            # ...Copy flipped images of that other class to the extended array.
-            flip_class = cross_flippable[cross_flippable[:, 0] == c][0][1]
-            X_extended = np.append(
-                X_extended, X[y == flip_class][:, :, ::-1, :], axis=0)
-        # Fill labels for added images set to current class.
-        y_extended = np.append(
-            y_extended,
-            np.full((X_extended.shape[0] - y_extended.shape[0]), c, dtype=int))
-
-        # If we can flip images of this class vertically and they would still belong to same class(ALL of them for this case)...
-        if c in self_flippable_vertically:
-            # ...Copy their flipped versions into extended array.
-            X_extended = np.append(
-                X_extended, X[y == c][:, ::-1, :, :], axis=0)
-        # Fill labels for added images set to current class.
-        y_extended = np.append(
-            y_extended,
-            np.full((X_extended.shape[0] - y_extended.shape[0]), c, dtype=int))
-
-        # If we can flip images of this class horizontally AND vertically and they would still belong to said class...
-        if c in self_flippable_both:
-            # ...Copy their flipped versions into extended array.
-            X_extended = np.append(
-                X_extended, X[y == c][:, ::-1, ::-1, :], axis=0)
-        # Fill labels for added images set to current class.
-        y_extended = np.append(
-            y_extended,
-            np.full((X_extended.shape[0] - y_extended.shape[0]), c, dtype=int))
-
-    return (X_extended, y_extended)
-
-
-def createFlip(X_train, y_train):
-    global NUM_TRAIN
-    global IMAGE_SHAPE
-    global NUM_CLASSES
-    global CLASS_TYPES
-
-    print("Start to flip images...")
-    X_train, y_train = flip_extend(X_train, y_train)
-    CLASS_TYPES, init_per_class, class_counts = np.unique(
-        y_train, return_index=True, return_counts=True)
-    NUM_TRAIN = X_train.shape[0]
-    IMAGE_SHAPE = X_train[0].shape
-    NUM_CLASSES = class_counts.shape[0]
-    print("Number of Flipped training examples =", NUM_TRAIN)
-    print("Image data shape =", IMAGE_SHAPE)
-    print("Number of classes =", NUM_CLASSES)
-    return X_train, y_train, class_counts
-
-
-def doFlip(inFile, outFile):
-    X_train, y_train, class_counts1 = readOriginal(inFile)
-    X_train, y_train, class_counts2 = createFlip(X_train, y_train)
-
-    plot_histograms(
-        'Class Distribution Original Training data vs New Flipped Training Data',
-        CLASS_TYPES, class_counts1, class_counts2, 'b',
-        'r')  # get flippedImg_63538.png
-    new_data = {'features': X_train, 'labels': y_train}
-    save_data(new_data, outFile)
-
-
-#----------------------------------------------------------------------------------------
-#----------------------------------------------------------------------------------------
-#----------------------------------------------------------------------------------------
 class AugmentedSignsBatchIterator(BatchIterator):
     """
     Iterates over dataset in batches.
@@ -270,21 +150,23 @@ class AugmentedSignsBatchIterator(BatchIterator):
         """
         Xb, yb = super(AugmentedSignsBatchIterator, self).transform(
             Xb if yb is None else Xb.copy(), yb)
-
+        #--------------------------------------------------------------------
+        #--------------------------------------------------------------------
+        # Apply 4 transformations in a random way
         if yb is not None:
             batch_size = Xb.shape[0]
             image_size = Xb.shape[1]
-            #Xb = self.zoom(Xb, batch_size)
             #print("\n\nimage: ",yb)
-            if (random.choice([True, False])):
-                Xb = self.histeq(Xb, batch_size)
-            if (random.choice([True, False])):
-                Xb = self.rotate(Xb, batch_size)
-            if (random.choice([True, False])):
-                Xb = self.zoom(Xb, batch_size)
-            else:
-                Xb = self.projection_transform(Xb, batch_size, image_size)
-
+            #if (random.choice([True, False])):
+            #Xb = self.histeq(Xb, batch_size)
+            #if (random.choice([True, False])):
+            #Xb = self.rotate(Xb, batch_size)
+            #if (random.choice([True, False])):
+            Xb = self.zoom(Xb, batch_size)
+            #else:
+            #    Xb = self.projection_transform(Xb, batch_size, image_size)
+        #--------------------------------------------------------------------
+        #--------------------------------------------------------------------
         return Xb, yb
 
     ################# image zoom function##############
@@ -492,15 +374,12 @@ def doExtended(inputFile, balanced, isTraining=True):
         X_data, y_data, class_counts1, balanced, 0.75)
 
     new_data = {'features': X_data_extended, 'labels': y_data_extended}
-    if isTraining:
-        save_data(new_data, train_extended_file)# or could be train_extended_balanced_file(balanced =>False)
-        plot_histograms(
+    save_data(new_data, train_extended_file)# or could be train_extended_balanced_file(balanced =>False)
+    print("Pickle saved")
+    plot_histograms(
             'Class Distribution  New Flipped Training Data vs New Extended Training Data',
             CLASS_TYPES, class_counts1, class_counts2, 'b',
             'r')  # get ExtendedImg_313672.png
-    else:
-        save_data(new_data, test_extended_file)
-    print("Pickle saved")
     #"""
 
 
@@ -605,47 +484,6 @@ def plot_flipped_examples(X_origin, X_data, y_data, n_examples):
 
     plt.show()
 
-
-def showFlippledImages():
-    X, y, _ = readOriginal(train_file)
-    X_original = np.empty(
-        [0, X.shape[1], X.shape[2], X.shape[3]], dtype=X.dtype)
-    X_result = np.empty([0, X.shape[1], X.shape[2], X.shape[3]], dtype=X.dtype)
-    Y_result = np.empty([0], dtype=y.dtype)
-
-    for c in range(NUM_CLASSES):
-        """
-        if c in self_flippable_horizontally:
-            # ...Copy their flipped versions into extended array.
-            X_original = np.append(X_original, X[y == c], axis=0)
-            X_result = np.append(X_result, X[y == c][:, :, ::-1, :], axis=0)
-        """
-        #-----------------------------------------
-        """
-        if c in cross_flippable[:, 0]:
-            X_original = np.append(X_original, X[y == c], axis=0)
-            flip_class = cross_flippable[cross_flippable[:, 0] == c][0][1]
-            X_result = np.append(
-                X_result, X[y == c][:, :, ::-1, :], axis=0
-            )  #change X[y == flip_class] to X[y == c] for visualization purposes
-        """
-        """
-        if c in self_flippable_vertically:
-            X_original = np.append(X_original, X[y == c], axis=0)
-            # ...Copy their flipped versions into extended array.
-            X_result = np.append(X_result, X[y == c][:, ::-1, :, :], axis=0)
-        """
-        """
-        if c in self_flippable_both:
-            X_original = np.append(X_original, X[y == c], axis=0)
-            # ...Copy their flipped versions into extended array.
-            X_result = np.append(X_result, X[y == c][:, ::-1, ::-1, :], axis=0)
-        """
-        Y_result = np.append(
-            Y_result,
-            np.full((X_result.shape[0] - Y_result.shape[0]), c, dtype=int))
-
-    plot_flipped_examples(X_original, X_result, Y_result, 1)
 
 
 def showAugmentSamples(file):
@@ -790,7 +628,7 @@ if __name__ == "__main__":
     #--------------------NORMALIZE DATA----1st step-----------------------------------------------------
     #x, y, cc = readOriginal(train_file)
     #normalizeData(x, y, cc, train_normalized_file)
-    #100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 614/614 [00:09<00:00, 61.84it/s]
+    #100%|███████████████████████████████████████████████████████| 614/614 [00:09<00:00, 61.84it/s]
     #x, y, cc = readOriginal(test_file)
     #normalizeData(x, y, cc, test_normalized_file)
     #100%|####################################################| 12630/12630 [08:04<00:00, 26.05it/s]
@@ -806,15 +644,17 @@ if __name__ == "__main__":
     #    balanced=True)  # BE CAREFUL! WITH OVERWRITTEN THE FILE #este fue usado
 
     #-------------------------PROCESS FILES 4th step------------------------------------------
-    #convertToGrayScale(train_extended_balanced_file,train_processed_balanced_file)
-
-    #convertToGrayScale(train_extended_file,train_processed_file) #este fue usado
-
-    #convertToGrayScale(test_normalized_file,test_processed_file)#only this was executed 2nd and then the flip
+    #convertToGrayScale(train_extended_balanced_file,train_processed_balanced_file)#not used
+    #convertToGrayScale(train_extended_file,train_processed_file) #Used
+    """Used to print Result
+    #x, y, cc = readOriginal(train_normalized_file)
+    #x , y = convertToGrayScale(x,y)#Final Test File
+    #plot_some_examples(x, y, 8);
+    """
     #-----------------------------------------------------------------------------
 
     #-----------------------------------------------------------------------------
-    #showAugmentSamples(train_normalized_file)
+    showAugmentSamples(train_normalized_file)
     #-----------------------------------------------------------------------------
     #X_train, y_train, class_counts1 = readOriginal(train_normalized_file)
     #X_train, y_train, class_counts2 = readOriginal(train_extended_file)
@@ -824,7 +664,7 @@ if __name__ == "__main__":
     #    CLASS_TYPES, class_counts1, class_counts2, 'g',
     #    'r')
     #
-    #DIVIDE VALID_TEST AND TRAIN SETS
+    #DIVIDE VALID_TEST AND TRAIN SETS FROM: train_processed_file
     """
     X_train, y_train = readData(train_processed_file)
 
@@ -832,7 +672,7 @@ if __name__ == "__main__":
     saveSplitData(X_train,y_train,train_processed_file_split)
     saveSplitData(X_validation,y_validation,validation_test_file_split)
     """
-    #DIVIDE VALID AND TEST SETS
+    #DIVIDE VALID AND TEST SETS FROM: validation_test_file_split
     """
     X_train, y_train = readData(validation_test_file_split)
 
