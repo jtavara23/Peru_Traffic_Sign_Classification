@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="edda45d4-7cc5-4eb0-b829-7bea85dbb079" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/testProcess.py" beforeDir="false" afterPath="$PROJECT_DIR$/testProcess.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pseudocode.py" beforeDir="false" afterPath="$PROJECT_DIR$/pseudocode.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -12,41 +13,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/augmentPeru.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="85">
-              <caret line="5" column="13" lean-forward="true" selection-start-line="5" selection-start-column="13" selection-end-line="5" selection-end-column="13" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/.gitignore">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="170">
-              <caret line="10" column="4" selection-start-line="10" selection-start-column="4" selection-end-line="10" selection-end-column="4" />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/testProcess.py">
+        <entry file="file://$PROJECT_DIR$/trainGerman.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="119">
-              <caret line="7" column="8" selection-start-line="7" selection-start-column="8" selection-end-line="7" selection-end-column="8" />
-              <folding>
-                <element signature="e#696#714#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pseudocode.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-298">
-              <caret line="24" selection-start-line="24" selection-end-line="24" />
+            <state relative-caret-position="379">
+              <caret line="170" column="45" lean-forward="true" selection-start-line="170" selection-start-column="45" selection-end-line="170" selection-end-column="45" />
             </state>
           </provider>
         </entry>
@@ -57,16 +28,29 @@
     <findStrings>
       <find>validation5_split_50</find>
       <find>train5_split_50</find>
-      <find>convertToGrayScale</find>
       <find>doFlip</find>
       <find>createFlip</find>
-      <find>flip_extend</find>
       <find>normalizeData</find>
-      <find>test_processed_file</find>
       <find>test_processed_extended_file</find>
       <find>train5_split_balanced</find>
-      <find>train_processed_balanced_file</find>
       <find>apply_configurations</find>
+      <find>train_processed_balanced_file</find>
+      <find>train_file</find>
+      <find>n_examples</find>
+      <find>BatchIterator</find>
+      <find>convertToGrayScale</find>
+      <find>X_data</find>
+      <find>test_processed_file</find>
+      <find>train_extended_balanced_file</find>
+      <find>flip_extend</find>
+      <find>test_extended_file</find>
+      <find>showAugmentSamples</find>
+      <find>extend_balancing_classes</find>
+      <find>batch_iterator</find>
+      <find>zoom</find>
+      <find>transform</find>
+      <find>numClases</find>
+      <find>iterac_entren</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -85,7 +69,6 @@
         <option value="$PROJECT_DIR$/trainGermanModel0.py" />
         <option value="$PROJECT_DIR$/trainGerman.py" />
         <option value="$PROJECT_DIR$/augmentDataProcess.py" />
-        <option value="$PROJECT_DIR$/augmentDataProcessPeru.py" />
         <option value="$PROJECT_DIR$/interfaz.py" />
         <option value="$PROJECT_DIR$/getDatos.py" />
         <option value="$PROJECT_DIR$/funcionesAuxiliares.py" />
@@ -94,20 +77,23 @@
         <option value="$PROJECT_DIR$/analyseSignal.py" />
         <option value="$PROJECT_DIR$/.gitignore" />
         <option value="$PROJECT_DIR$/testProcess.py" />
+        <option value="$PROJECT_DIR$/augmentDataProcessPeru.py" />
+        <option value="$PROJECT_DIR$/pseudocode.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="-1664" />
-    <option name="y" value="45" />
-    <option name="width" value="1400" />
-    <option name="height" value="784" />
+    <option name="x" value="1910" />
+    <option name="y" value="-10" />
+    <option name="width" value="1939" />
+    <option name="height" value="1049" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="PackagesPane" />
       <pane id="ProjectPane">
         <subPane>
@@ -120,13 +106,12 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../TG/TESIS CNN/latex_tesis - v2" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
   </component>
@@ -157,27 +142,23 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1555273054866</updated>
-      <workItem from="1555273059512" duration="3733000" />
+      <workItem from="1555273059512" duration="13272000" />
+      <workItem from="1555717830992" duration="4713000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="3733000" />
+    <option name="totallyTimeSpent" value="17985000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1928" y="-8" width="1936" height="1056" extended-state="6" />
+    <frame x="1913" y="-7" width="1550" height="838" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info id="Designer" />
-      <window_info id="UI Designer" />
-      <window_info id="Favorites" side_tool="true" />
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.19829424" />
+      <window_info content_ui="combo" id="Project" order="0" weight="0.252349" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Docker" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Database Changes" />
-      <window_info anchor="bottom" id="Version Control" />
-      <window_info anchor="bottom" id="Terminal" visible="true" weight="0.156013" />
-      <window_info anchor="bottom" id="Event Log" side_tool="true" />
+      <window_info id="Designer" order="2" />
+      <window_info id="UI Designer" order="3" />
+      <window_info id="Favorites" order="4" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
       <window_info anchor="bottom" id="Run" order="2" />
@@ -185,15 +166,47 @@
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="right" id="Palette" />
-      <window_info anchor="right" id="Maven" />
-      <window_info anchor="right" id="Palette&#9;" />
-      <window_info anchor="right" id="SciView" />
-      <window_info anchor="right" id="Database" />
+      <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Version Control" order="8" />
+      <window_info anchor="bottom" id="Database Changes" order="9" />
+      <window_info anchor="bottom" id="Terminal" order="10" weight="0.156013" />
+      <window_info anchor="bottom" id="Event Log" order="11" side_tool="true" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Palette" order="3" />
+      <window_info anchor="right" id="Maven" order="4" />
+      <window_info anchor="right" id="Database" order="5" />
+      <window_info anchor="right" id="Palette&#9;" order="6" />
+      <window_info anchor="right" id="SciView" order="7" />
     </layout>
+    <layout-to-restore>
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.252349" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info id="Designer" order="2" />
+      <window_info id="UI Designer" order="3" />
+      <window_info id="Favorites" order="4" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Version Control" order="8" />
+      <window_info anchor="bottom" id="Database Changes" order="9" />
+      <window_info anchor="bottom" id="Terminal" order="10" weight="0.156013" />
+      <window_info anchor="bottom" id="Event Log" order="11" side_tool="true" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Palette" order="3" />
+      <window_info anchor="right" id="Maven" order="4" />
+      <window_info anchor="right" id="Database" order="5" />
+      <window_info anchor="right" id="Palette&#9;" order="6" />
+      <window_info anchor="right" id="SciView" order="7" />
+    </layout-to-restore>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
@@ -210,13 +223,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="51">
           <caret line="3" column="58" selection-start-line="3" selection-start-column="58" selection-end-line="3" selection-end-column="58" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/trainGerman.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret selection-end-line="4" selection-end-column="38" />
         </state>
       </provider>
     </entry>
@@ -237,44 +243,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/funcionesAuxiliares.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="17">
-          <caret line="1" column="28" selection-start-line="1" selection-start-column="28" selection-end-line="1" selection-end-column="28" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/confusion_matrix.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="34">
           <caret line="2" column="33" selection-start-line="2" selection-start-column="33" selection-end-line="2" selection-end-column="33" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/augmentDataProcessPeru.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret selection-end-line="3" selection-end-column="38" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pseudocode.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-298">
-          <caret line="24" selection-start-line="24" selection-end-line="24" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/analyseSignal.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="680">
-          <caret line="40" column="26" lean-forward="true" selection-start-line="40" selection-start-column="26" selection-end-line="40" selection-end-column="26" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -292,13 +264,6 @@
           <folding>
             <element signature="e#214#227#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/augmentPeru.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="5" column="13" lean-forward="true" selection-start-line="5" selection-start-column="13" selection-end-line="5" selection-end-column="13" />
         </state>
       </provider>
     </entry>
@@ -321,6 +286,41 @@
           <folding>
             <element signature="e#696#714#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/funcionesAuxiliares.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="578">
+          <caret line="81" column="47" lean-forward="true" selection-start-line="81" selection-start-column="47" selection-end-line="81" selection-end-column="47" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/analyseSignal.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-202">
+          <caret line="71" column="26" selection-start-line="71" selection-start-column="26" selection-end-line="71" selection-end-column="26" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/augmentDataProcessPeru.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="624">
+          <caret line="647" column="59" selection-start-line="647" selection-start-column="59" selection-end-line="647" selection-end-column="59" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pseudocode.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="527">
+          <caret line="36" column="33" selection-start-line="36" selection-start-column="33" selection-end-line="36" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/trainGerman.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="379">
+          <caret line="170" column="45" lean-forward="true" selection-start-line="170" selection-start-column="45" selection-end-line="170" selection-end-column="45" />
         </state>
       </provider>
     </entry>

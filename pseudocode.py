@@ -6,8 +6,8 @@ function funcionRELU(datos):
 
 function capaConvolucion(imagenes, numCanales,tamañoFiltro, numFiltros, usarPooling)	:
     forma <- [tamañoFiltro, tamañoFiltro, numCanales, numFiltros]
-    pesos <- inicializar_pesos(shape=forma);
-    biases <- inicializar_bias([numFiltros]);
+    pesos <- inicializarpesos(shape=forma);
+    biases <- inicializarbias([numFiltros]);
     convolucion <-convolucion2D(input = imagenes, filter=pesos, formaPadding=[1, 1, 1, 1], padding=activado);
 
     convolucion <- convolucion + biases;
@@ -19,70 +19,68 @@ function capaConvolucion(imagenes, numCanales,tamañoFiltro, numFiltros, usarPoo
     retorna (convolucionPool, pesos, convolucion)
 
 
-function entropiaCruzada(vector_salida_calculada,vector_salida_deseada):
-    cross_entropy <- -.sum(vector_salida_deseada * nlog(vector_salida_calculada));
-    retorna cross_entropy;
+function entropiaCruzada(vectorsalidacalculada,vectorsalidadeseada):
+    crossentropy <- -.sum(vectorsalidadeseada * nlog(vectorsalidacalculada));
+    retorna crossentropy;
 
-function softmax(vector_datos):
-    retorna exp(vector_datos)/sum(exp(vector_datos));
+function softmax(vectordatos):
+    retorna exp(vectordatos)/sum(exp(vectordatos));
 
 
-function capa_Totalmente_Conectada(entradas, num_Entradas, num_Salidas, usarRELU):
+function capaTotalmenteConectada(entradas, numEntradas, numSalidas, usarRELU):
     
-    pesos <- inicializar_pesos(forma=[num_Entradas, num_Salidas])
-    biases <- inicializar_bias([num_Salidas])
+    pesos <- inicializarpesos(forma=[numEntradas, numSalidas])
+    biases <- inicializarbias([numSalidas])
     capa <- (entrada * pesos) + biases
 
     if usarRELU:
         capa <- funcionRELU(capa)
-    else:
-
     return (capa, pesos)
 
 
 main():
-    entradas <-  TensorPlaceHolder(Lote_imagenes, tamañoImagen, tamañoImagen, Profundidad);
-    salida_deseada <- TensorPlaceHolder(Lote_imagenes,NumeroClases);
+    entradas <-  TensorPlaceHolder(Loteimagenes, tamañoImagen, tamañoImagen, Profundidad);
+    salidadeseada <- TensorPlaceHolder(Loteimagenes,_NumeroClases);
 
-    num_filtros_entrada_Capa_N <- 1;
+    numfiltrosentradaCapa_N <- 1;
 
-    Para N <- Numero_De_Capas:
-        capa_conv_N, pesos_conv_N, capa_conv_NoPool_N <- capaConvolucion(
+    Para _N <- _NumeroDeCapas:
+        capaconv_N, pesosconv_N, capaconv_NoPool_N <- capaConvolucion(
             imagen=entradas,
-            numCanales=num_filtros_entrada_Capa_N,
-            tamañoFiltro=tam_filtro_Capa_N,
-            numFiltros=num_filtros_salida_Capa_N,
+            numCanales=numfiltrosentradaCapa_N,
+            tamañoFiltro=tamfiltroCapa_N,
+            numFiltros=numfiltrossalidaCapa_N,
             usarPooling=True)
 
-        capa_conv_N_dropOut <- dropout(capa_conv_N, keep_prob=dropout_convN);
+        capaConvDropOut_N <- dropout(capaconv_N, keepprob=dropoutconv_N);
 
-        entradas <- capa_conv_N_dropOut;                             
-        num_filtros_entrada_Capa_N = num_filtros_salida_Capa_N;
+        entradas <- capaConvDropOut_N;                             
+        numfiltrosentradaCapa_N = numfiltrossalidaCapa_N;
     Fin
 
-    Para N <- (Numero_De_Capas - 1):
-        capa_conv_N_dropOut <- ejecutarPooling(data=capa_conv_N_dropOut, tamañoFiltro= 2^(Numero_De_Capas-N));
-        datos_capa_N <- datos_capa_N + capa_conv_N_dropOut[ancho] * capa_conv_N_dropOut[largo] * capa_conv_N_dropOut[canales];
-        capa_Salida <- capa_Salida + capa_conv_N_dropOut;
+    Para _N <- (_NumeroDeCapas - 1):
+        capaConvDropOut_N <- ejecutarPooling(data=capaConvDropOut_N, tamañoFiltro= 2^(_NumeroDeCapas-_N));
+        datosCapa_N <- datosCapa_N + capaConvDropOut_N[ancho] * capaConvDropOut_N[largo] * capaConvDropOut_N[canales];
+        capaSalida <- capaSalida + capaConvDropOut_N;
     Fin
 
 
-    capa_fc1, pesos_fc1 <- capa_Totalmente_Conectada(
-            imagenes=capa_Salida,
-            num_Entradas=datos_capa_N,
-            num_Salidas=num_Salidas,
+    capafc1, pesosfc1 <- capaTotalmenteConectada(
+            imagenes=capaSalida,
+            numEntradas=datosCapa_N,
+            numSalidas=numSalidas,
             usarRELU=True);
 
-    capa_fc1_dropOut <- dropout(capa_fc1, keep_prob=dropout_fc1);
+    capafc1dropOut <- dropout(capafc1, keepprob=dropoutfc1);
 
 
-    capa_fc2, pesos_fc2 <- capa_Totalmente_Conectada(
-            imagenes=capa_fc1_dropOut,
-            num_Entradas=num_Salidas,
-            num_Salidas=num_Clases,
+    capafc2, pesosfc2 <- capaTotalmenteConectada(
+            imagenes=capafc1dropOut,
+            numEntradas=numSalidas,
+            numSalidas=numClases,
             usarRELU=False);
 
-    salida_calculada <- softmax(capa_fc2);
+    salidacalculada <- softmax(capafc2);
 
-    error <- entropiaCruzada(salida_calculada,salida_deseada);
-    optimizador = OptimizadorAdam(Tasa_Aprendizaje).minimize(error, global_step=iterac_entren)
+    error <- entropiaCruzada(salidacalculada,salidadeseada);
+    optimizador = OptimizadorAdam(TasaAprendizaje).minimize(error, globalstep=iteracentren)
