@@ -3,7 +3,7 @@ __pycache__
 *.ini
 *.log
 .idea
-/modelsBalanced
+/models_Alemania
 /models10extend
 /models_Peru
 /backlupModelsGerman
