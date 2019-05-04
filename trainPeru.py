@@ -35,8 +35,8 @@ NOMBRE_TENSOR_SALIDA_DESEADA = "outputYDeseada"
 
 #--------------FOR BALANCED DATASET-----------------------
 #"""
-rutaDeModelo = 'models_Peru/model1/'
-TASA_APRENDIZAJE = 5e-4
+rutaDeModelo = 'models_Peru/modelE/'
+TASA_APRENDIZAJE = 1e-4
 
 NUM_CLASSES = 0  #7
 NUM_TRAIN = 0  #31314 *0.75 = 23485
@@ -326,7 +326,7 @@ def create_cnn():
     #---------------------------Capa totalmente conectada--------------------------------------------
     #The previous layer.,  Num. inputs from prev. layer. , Num. outputs.
     fc1_inputs = num_fc_layers
-    fc1_outputs = 1024
+    fc1_outputs = 2700
     dropout_fc1 = 0.5
     capa_fc1, pesos_fc1 = capa_fc(
         nombre="FC1",
@@ -339,7 +339,7 @@ def create_cnn():
                             lambda: tf.nn.dropout(capa_fc1, keep_prob=dropout_fc1),
                             lambda: capa_fc1)
 
-    fc2_inputs = 1024
+    fc2_inputs = 2700
     fc2_outputs = NUM_CLASSES
     capa_fc2, pesos_fc2 = capa_fc(
         nombre="FC2",
@@ -533,8 +533,8 @@ if __name__ == "__main__":
                 y_deseada: batch_img_clase,
                 is_training: True
             })
-
-        entren_writer.add_summary(resu, i)
+        if (i + 1) % CHKP_REVISAR_PROGRESO == 0:
+            entren_writer.add_summary(resu, i)
         avg_loss += err
         avg_acc += acc
 
