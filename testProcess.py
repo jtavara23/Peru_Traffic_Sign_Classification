@@ -8,7 +8,7 @@ To execute run:
        > python testProcess.py german model7 38700 false true
 
 For tensorboard run:
-    > tensorboard --logdir=modelsBalanced/modelA/ --host=127.0.0.1
+    > tensorboard --logdir=modelsName/modelA/ --host=127.0.0.1 --port 6006
 """
 # Depening on run command it test:
 # test_file = '../signals_database/traffic-signs-data/test_2Processed.p'
@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
     #For GERMAN FILES [test_5ExtendedProcessed] or [test_2Processed]
     if(typeOfSignal == "german"):
-        rutaDeModelo = 'modelsBalanced/'+modelo+'/'
+        rutaDeModelo = 'models_Alemania/'+modelo+'/'
         test_file = '../signals_database/traffic-signs-data/test_2Processed.p'
 
     elif(typeOfSignal == "peru"):
@@ -184,7 +184,7 @@ if __name__ == "__main__":
 
     msg = "Acierto en el conjunto de Testing: {0:.2%} ({1} / {2})"
     print(msg.format(acc, correct_sum, cant_evaluar))
-    #writeResults(msg.format(acc, correct_sum, cant_evaluar), test_file)
+    writeResults(msg.format(acc, correct_sum, cant_evaluar), test_file)
     if(show_confMatrix == "true"):
         print("Mostrando Matriz de Confusion")
         plot_confusion_matrix_Large(clases_pred, clases_deseadas,num_classes)
