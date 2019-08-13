@@ -4,6 +4,7 @@ __pycache__
 *.log
 .idea
 /models_Alemania
+/modelsAlemania
 /models10extend
 /models_Peru
 ThesisCode.code-workspace
