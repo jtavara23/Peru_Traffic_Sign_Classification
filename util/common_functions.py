@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 import math
 import cv2
 import pandas as pd
-import confusion_matrix as confMat
+import util.confusion_matrix as confMat
 import seaborn as sns
 import pickle
 """
@@ -489,7 +489,7 @@ def plot_pr_curve(y_score, Y_test, num_classes):
     #This average precision equals the exact area under not-interpolated (that is, piecewise constant) precision-recall curve.
     from sklearn.metrics import precision_recall_curve
     from sklearn.metrics import average_precision_score
-    from sklearn.utils.fixes import signature
+    from funcsigs import signature
 
     #print(y_score)
     y_score_oneHot = np.eye(num_classes,dtype=int)[y_score]

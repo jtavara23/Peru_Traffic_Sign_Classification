@@ -1,12 +1,15 @@
-#-------------------------------------
-# Augment Process for Peru Signs
-# It uses 4 from 5 Image Techniques(No flipping)
-#-------------------------------------
+"""
+-------------------------------------
+ Augment Process for Peru Signs
+ It uses 4 from 5 Image Techniques(No flipping)
+-------------------------------------
+"""
+
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 from pandas.io.parsers import read_csv
-from funcionesAuxiliares import readData, display
+from util.common_functions import readData, display
 
 # pip install nolearn , conda install libpython , pip install --upgrade https://github.com/Lasagne/Lasagne/archive/master.zip
 from nolearn.lasagne import BatchIterator

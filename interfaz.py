@@ -43,7 +43,7 @@ def updateImage():
         if not filePath:
             imgIsSelected = False
         else:
-            print("Imagem procurada: " + filePath)
+            print("Imagen: " + filePath)
             pathText.delete('1.0', END)
             #queryText.delete('1.0', END)
             # pathText -> just for the view

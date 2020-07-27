@@ -22,7 +22,7 @@ import pickle
 from pandas.io.parsers import read_csv
 from matplotlib import pyplot as plt
 import tensorflow as tf
-from funcionesAuxiliares import readData, plot_example_errors, plot_confusion_matrix_Large, plot_roc,plot_pr_curve
+from util.common_functions import readData, plot_example_errors, plot_confusion_matrix_Large, plot_roc,plot_pr_curve
 import math
 import os
 import datetime
@@ -34,7 +34,7 @@ model_number = ""
 
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-np.set_printoptions(threshold=np.nan)
+#np.set_printoptions(threshold=np.nan)
 
 NUM_TEST = 0
 NOMBRE_TENSOR_ENTRADA = 'inputX'

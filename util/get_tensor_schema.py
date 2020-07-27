@@ -6,13 +6,30 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 import os
-from funcionesAuxiliares import plot_conv_weights, plot_conv_layer, display, readData
+from util.common_functions import plot_conv_weights, plot_conv_layer, display, readData
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
+
+"""
+ To check the schema of a Model
+
+ Parameters:
+ -----------
+ path :         String representing the model's path
+ train_file:    String representing the training model data
+------------
+
+Returns:
+----------
+    Schema of Tensors
+----------
+
+"""
+
 path = 'modelsBalanced/model1/'
+train_file = '../signals_database/traffic-signs-data/train_4ProcessedBalanced.p'
 
 IMAGE_TO_DISPLAY = 0
-train_file = '../signals_database/traffic-signs-data/train_4ProcessedBalanced.p'
 X_train, y_train = readData(train_file)
 imagenconv = X_train[IMAGE_TO_DISPLAY]
 #display(imagenconv, True, 32)

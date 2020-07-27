@@ -1,9 +1,10 @@
-#-------------------------------------
-# Core file to recognize Signal Traffic Image
-# Main function(runAnalyzer) gets call from "Interfaz.py"
-# Works for Peru and German Images
-#-------------------------------------
-
+"""
+-------------------------------------
+ Core file to recognize Signal Traffic Image
+ Main function(runAnalyzer) gets call from "Interfaz.py"
+ Works for Peru and German Images
+-------------------------------------
+"""
 import numpy as np
 import pandas as pd
 import cv2
