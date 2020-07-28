@@ -12,7 +12,7 @@ import pickle
 from pandas.io.parsers import read_csv
 from matplotlib import pyplot as plt
 import tensorflow as tf
-from funcionesAuxiliares import readData, plot_example_errors, plot_confusion_matrix
+from util.common_functions import readData, plot_example_errors, plot_confusion_matrix
 import math
 import os
 import sys
