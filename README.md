@@ -23,5 +23,8 @@ sudo apt-get install python3-tk
 # Contact
 Josue Gaston Tavara Idrogo - joshuatavara23@gmail.com
 
+# Thesis
+http://dspace.unitru.edu.pe/handle/UNITRU/13189
+
 # Clasificador de Señales
 ![Preview](imagenes/interfaz.jpg)
